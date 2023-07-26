@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author lee
- * @description
+ * @description Netty Server
  */
 @Slf4j
 public class LeeServer {
@@ -19,7 +19,6 @@ public class LeeServer {
     private int port;
 
     public LeeServer(int port) {
-
         // 线程池
         EventLoopGroup mainGroup = new NioEventLoopGroup();
         EventLoopGroup subGroup = new NioEventLoopGroup();
