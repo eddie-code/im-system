@@ -1,5 +1,6 @@
 package com.learn.im.tcp.server;
 
+import com.learn.im.codec.config.BootstrapConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -16,14 +17,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LeeServer {
 
-    private int port;
+    BootstrapConfig.TcpConfig config;
 
-    public LeeServer(int port) {
+    EventLoopGroup mainGroup;
+
+    EventLoopGroup subGroup;
+
+    ServerBootstrap server;
+
+    public LeeServer(BootstrapConfig.TcpConfig config) {
+        this.config = config;
         // 线程池
-        EventLoopGroup mainGroup = new NioEventLoopGroup();
-        EventLoopGroup subGroup = new NioEventLoopGroup();
+        mainGroup = new NioEventLoopGroup(config.getBossThreadSize());
+        subGroup = new NioEventLoopGroup(config.getWorkThreadSize());
         // 赋值给server
-        ServerBootstrap server = new ServerBootstrap();
+        server = new ServerBootstrap();
         server.group(mainGroup, subGroup)
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_BACKLOG, 10240) // 服务端可连接队列大小
@@ -36,6 +44,11 @@ public class LeeServer {
 
                     }
                 });
-        server.bind(port);
     }
+
+    public void start() {
+        this.server.bind(this.config.getTcpPort());
+    }
+
+
 }
