@@ -6,6 +6,20 @@ package com.learn.im.common.constant;
  */
 public class Constants {
 
+    /**
+     * channel绑定的userId Key
+     */
+    public static final String UserId = "userId";
+
+    /**
+     * channel绑定的appId
+     */
+    public static final String AppId = "appId";
+
+    /**
+     * 端类型
+     */
+    public static final String ClientType = "clientType";
 
     public static class RedisConstants {
 

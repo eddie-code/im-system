@@ -42,10 +42,9 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             );
 
             // 登陸事件
-            String userId = loginPack.getUserId();
-            channelHandlerContext.channel()
-                    .attr(AttributeKey.valueOf("userId"))
-                    .set(userId);
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.UserId)).set(loginPack.getUserId());
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.AppId)).set(message.getMessageHeader().getAppId());
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ClientType)).set(message.getMessageHeader().getClientType());
 
             // 将 channel 存储起来
 
@@ -56,14 +55,38 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userSession.setClientType(message.getMessageHeader().getClientType());
             userSession.setUserId(loginPack.getUserId());
             userSession.setConnectState(ImConnectStatusEnum.ONLINE_STATUS.getCode());
+
             // TODO 使用 Redisson 存到redis
             RedissonClient redissonClient = RedisManager.getRedissonClient();
             // 用户session，appId + UserSessionConstants + 用户id  最终存入Hash格式例子： 10000:userSession:lee
             RMap<String, String> map = redissonClient.getMap(message.getMessageHeader().getAppId() + Constants.RedisConstants.UserSessionConstants + loginPack.getUserId());
-            map.put(message.getMessageHeader().getClientType() + "", JSONObject.toJSONString(userSession));
+            map.put(
+                    String.valueOf(message.getMessageHeader().getClientType()),
+                    JSONObject.toJSONString(userSession)
+            );
+            // channel 信息保存系session里面
+            SessionSocketHolder.put(
+                    message.getMessageHeader().getAppId(),
+                    loginPack.getUserId(),
+                    message.getMessageHeader().getClientType(),
+                    message.getMessageHeader().getImei(),
+                    (NioSocketChannel) channelHandlerContext.channel()
+            );
+        } else if (command == SystemCommand.LOGOUT.getCommand()) { // 用户退出
+            // TODO
+            // 删除 session 里面的 channel 信息（既是：客户端传入来的 messageHeader 消息）
+            String userId = (String) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.UserId)).get();
+            Integer appId = (Integer) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.AppId)).get();
+            Integer clientType = (Integer) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ClientType)).get();
+            SessionSocketHolder.remove(appId, userId, clientType);
 
-            SessionSocketHolder.put(loginPack.getUserId(), (NioSocketChannel) channelHandlerContext.channel());
+            // 删除 redis 里面的路由关系
+            RedissonClient redissonClient = RedisManager.getRedissonClient();
+            RMap<Object, Object> map = redissonClient.getMap(appId + Constants.RedisConstants.UserSessionConstants + userId);
+            map.remove(clientType);
 
+            // 关闭路由
+            channelHandlerContext.channel().close();
         }
     }
 
