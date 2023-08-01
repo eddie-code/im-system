@@ -3,6 +3,7 @@ lee:
   webSocketPort: 19000
   bossThreadSize: 1 # 线程组
   workThreadSize: 8 # 工作线程
+  heartBeatTime: 20000 #心跳超时时间 单位毫秒
 
   redis:
     mode: single # 单机模式：single 哨兵模式：sentinel 集群模式：cluster

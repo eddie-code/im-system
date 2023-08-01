@@ -2,9 +2,14 @@ package com.learn.im.common.enums.command;
 
 /**
  * @author lee
- * @description
+ * @description 16进制
  */
 public enum SystemCommand implements Command {
+
+    /**
+     * 心跳 9999
+     */
+    PING(0x270f),
 
     /**
      * 登录 9000

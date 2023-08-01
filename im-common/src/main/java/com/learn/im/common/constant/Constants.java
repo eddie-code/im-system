@@ -21,6 +21,11 @@ public class Constants {
      */
     public static final String ClientType = "clientType";
 
+    /**
+     * 读取时间 (心跳)
+     */
+    public static final String ReadTime = "readTime";
+
     public static class RedisConstants {
 
         /**

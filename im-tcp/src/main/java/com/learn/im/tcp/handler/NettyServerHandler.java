@@ -47,15 +47,13 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ClientType)).set(message.getMessageHeader().getClientType());
 
             // 将 channel 存储起来
-
-            // Redis map
-
             UserSession userSession = new UserSession();
             userSession.setAppId(message.getMessageHeader().getAppId());
             userSession.setClientType(message.getMessageHeader().getClientType());
             userSession.setUserId(loginPack.getUserId());
             userSession.setConnectState(ImConnectStatusEnum.ONLINE_STATUS.getCode());
 
+            // Redis map
             // TODO 使用 Redisson 存到redis
             RedissonClient redissonClient = RedisManager.getRedissonClient();
             // 用户session，appId + UserSessionConstants + 用户id  最终存入Hash格式例子： 10000:userSession:lee
@@ -74,20 +72,16 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             );
         } else if (command == SystemCommand.LOGOUT.getCommand()) { // 用户退出
             // TODO
-            // 删除 session 里面的 channel 信息（既是：客户端传入来的 messageHeader 消息）
-            String userId = (String) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.UserId)).get();
-            Integer appId = (Integer) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.AppId)).get();
-            Integer clientType = (Integer) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ClientType)).get();
-            SessionSocketHolder.remove(appId, userId, clientType);
-
-            // 删除 redis 里面的路由关系
-            RedissonClient redissonClient = RedisManager.getRedissonClient();
-            RMap<Object, Object> map = redissonClient.getMap(appId + Constants.RedisConstants.UserSessionConstants + userId);
-            map.remove(clientType);
-
-            // 关闭路由
-            channelHandlerContext.channel().close();
+            SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
+        } else if (command == SystemCommand.PING.getCommand()) { // 心跳检测
+            // 设置为当前时间
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
         }
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        // ... 为了不影响原来业务代码, 新建一个 HeartBeatHandler 去处理心跳检测
     }
 
 }

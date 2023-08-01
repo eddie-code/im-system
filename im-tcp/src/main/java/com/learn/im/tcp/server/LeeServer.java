@@ -2,6 +2,7 @@ package com.learn.im.tcp.server;
 
 import com.learn.im.codec.MessageDecoder;
 import com.learn.im.codec.config.BootstrapConfig;
+import com.learn.im.tcp.handler.HeartBeatHandler;
 import com.learn.im.tcp.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -10,6 +11,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -44,6 +46,9 @@ public class LeeServer {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline().addLast(new MessageDecoder());
+                        // 超过十秒钟就触发一次检测
+                        socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 10));
+                        socketChannel.pipeline().addLast(new HeartBeatHandler(config.getHeartBeatTime()));
                         socketChannel.pipeline().addLast(new NettyServerHandler());
                     }
                 });
