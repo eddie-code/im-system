@@ -1,6 +1,7 @@
 package com.learn.im.tcp;
 
 import com.learn.im.codec.config.BootstrapConfig;
+import com.learn.im.tcp.redis.RedisManager;
 import com.learn.im.tcp.server.LeeServer;
 import com.learn.im.tcp.server.LeeWebSocketServer;
 import org.yaml.snakeyaml.Yaml;
@@ -30,6 +31,9 @@ public class Starter {
 
             new LeeServer(bootstrapConfig.getLee()).start();
             new LeeWebSocketServer(bootstrapConfig.getLee()).start();
+
+            RedisManager.init(bootstrapConfig);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(500);

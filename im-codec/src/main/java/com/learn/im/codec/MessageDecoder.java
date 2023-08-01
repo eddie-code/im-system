@@ -39,11 +39,11 @@ public class MessageDecoder extends ByteToMessageDecoder {
         // 获取clientType
         int clientType = byteBuf.readInt();
 
-        // 获取appId
-        int appId = byteBuf.readInt();
-
         // 获取messageType
         int messageType = byteBuf.readInt();
+
+        // 获取appId
+        int appId = byteBuf.readInt();
 
         // 获取imeiLength
         int imeiLength = byteBuf.readInt();
