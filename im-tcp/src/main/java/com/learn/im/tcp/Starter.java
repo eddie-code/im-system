@@ -1,9 +1,11 @@
 package com.learn.im.tcp;
 
 import com.learn.im.codec.config.BootstrapConfig;
+import com.learn.im.tcp.reciver.MessageReciver;
 import com.learn.im.tcp.redis.RedisManager;
 import com.learn.im.tcp.server.LeeServer;
 import com.learn.im.tcp.server.LeeWebSocketServer;
+import com.learn.im.tcp.utils.MqFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
@@ -31,8 +33,12 @@ public class Starter {
 
             new LeeServer(bootstrapConfig.getLee()).start();
             new LeeWebSocketServer(bootstrapConfig.getLee()).start();
-
+            // 初始化redis
             RedisManager.init(bootstrapConfig);
+            // 初始化mq
+            MqFactory.init(bootstrapConfig.getLee().getRabbitmq());
+            // 消息接收器
+            MessageReciver.init();
 
         } catch (Exception e) {
             e.printStackTrace();
