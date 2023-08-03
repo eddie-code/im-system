@@ -7,25 +7,28 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 
 /**
  * @author lee
- * @description
+ * @description 消息接收器
  */
 @Slf4j
 public class MessageReciver {
+
+    private static String brokerId;
 
     private static void startReciverMessage() {
 
         try {
             // 获取MQ的通道
-            Channel channel = MqFactory.getChannel(Constants.RabbitConstants.MessageService2Im);
+            Channel channel = MqFactory.getChannel(Constants.RabbitConstants.MessageService2Im + brokerId);
 
             // 队列声明
             channel.queueDeclare(
-                    Constants.RabbitConstants.MessageService2Im, // Queue
+                    Constants.RabbitConstants.MessageService2Im + brokerId, // Queue
                     true, // 是否持久化
                     false, // 一般 false
                     false, // 是否删除
@@ -34,14 +37,14 @@ public class MessageReciver {
 
             // 绑定交换机 （暂时没有routingKey, 后面补充）
             channel.queueBind(
-                    Constants.RabbitConstants.MessageService2Im, // Queue
-                    Constants.RabbitConstants.MessageService2Im, // Exchanges
-                    ""
+                    Constants.RabbitConstants.MessageService2Im + brokerId, // Queue
+                    Constants.RabbitConstants.MessageService2Im + brokerId, // Exchanges
+                    brokerId // routingKey
             );
 
             // 消费
             channel.basicConsume(
-                    Constants.RabbitConstants.MessageService2Im,
+                    Constants.RabbitConstants.MessageService2Im + brokerId,
                     false, // 是否自动提交, 一般设置 false
                     new DefaultConsumer(channel) {
                         @Override
@@ -62,4 +65,10 @@ public class MessageReciver {
         startReciverMessage();
     }
 
+    public static void init(String brokerId) {
+        if (StringUtils.isBlank(MessageReciver.brokerId)) {
+            MessageReciver.brokerId = brokerId;
+        }
+        startReciverMessage();
+    }
 }

@@ -20,6 +20,7 @@ import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 
 /**
  * @author lee
@@ -27,6 +28,12 @@ import java.net.InetAddress;
  */
 @Slf4j
 public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
+
+    private Integer brokerId;
+
+    public NettyServerHandler(Integer brokerId) {
+        this.brokerId = brokerId;
+    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message message) throws Exception {
@@ -52,6 +59,14 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userSession.setClientType(message.getMessageHeader().getClientType());
             userSession.setUserId(loginPack.getUserId());
             userSession.setConnectState(ImConnectStatusEnum.ONLINE_STATUS.getCode());
+            userSession.setBrokerId(brokerId);
+
+            try {
+                InetAddress localHost = InetAddress.getLocalHost();
+                userSession.setBrokerHost(localHost.getHostAddress());
+            }catch (Exception e){
+                e.printStackTrace();
+            }
 
             // Redis map
             // TODO 使用 Redisson 存到redis

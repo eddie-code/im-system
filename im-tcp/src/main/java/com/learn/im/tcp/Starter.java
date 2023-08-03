@@ -43,7 +43,7 @@ public class Starter {
             // 初始化mq
             MqFactory.init(bootstrapConfig.getLee().getRabbitmq());
             // 消息接收器
-            MessageReciver.init();
+            MessageReciver.init(String.valueOf(bootstrapConfig.getLee().getBrokerId()));
             // zookeeper 注册
             registerZK(bootstrapConfig);
 

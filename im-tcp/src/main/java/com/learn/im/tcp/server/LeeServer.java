@@ -49,7 +49,7 @@ public class LeeServer {
                         // 超过十秒钟就触发一次检测
                         socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 10));
                         socketChannel.pipeline().addLast(new HeartBeatHandler(config.getHeartBeatTime()));
-                        socketChannel.pipeline().addLast(new NettyServerHandler());
+                        socketChannel.pipeline().addLast(new NettyServerHandler(config.getBrokerId()));
                     }
                 });
     }
