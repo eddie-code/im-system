@@ -21,3 +21,6 @@ lee:
     virtualHost: /
     userName: guest
     password: guest
+  zkConfig:
+    zkAddr: 192.168.56.101:2181
+    zkConnectTimeOut: 50000

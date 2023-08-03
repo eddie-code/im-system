@@ -3,14 +3,19 @@ package com.learn.im.tcp;
 import com.learn.im.codec.config.BootstrapConfig;
 import com.learn.im.tcp.reciver.MessageReciver;
 import com.learn.im.tcp.redis.RedisManager;
+import com.learn.im.tcp.register.RegistryZK;
+import com.learn.im.tcp.register.ZKit;
 import com.learn.im.tcp.server.LeeServer;
 import com.learn.im.tcp.server.LeeWebSocketServer;
 import com.learn.im.tcp.utils.MqFactory;
+import org.I0Itec.zkclient.ZkClient;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * @author lee
@@ -39,11 +44,25 @@ public class Starter {
             MqFactory.init(bootstrapConfig.getLee().getRabbitmq());
             // 消息接收器
             MessageReciver.init();
+            // zookeeper 注册
+            registerZK(bootstrapConfig);
 
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(500);
         }
+    }
+
+    public static void registerZK(BootstrapConfig config) throws UnknownHostException {
+        // 获取ip地址
+        String hostAddress = InetAddress.getLocalHost().getHostAddress();
+        ZkClient zkClient = new ZkClient(config.getLee().getZkConfig().getZkAddr(),
+                config.getLee().getZkConfig().getZkConnectTimeOut());
+        ZKit zKit = new ZKit(zkClient);
+        RegistryZK registryZK = new RegistryZK(zKit, hostAddress, config.getLee());
+        Thread thread = new Thread(registryZK);
+        thread.start();
+
     }
 
 }

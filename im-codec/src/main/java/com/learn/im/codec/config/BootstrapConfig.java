@@ -58,6 +58,11 @@ public class BootstrapConfig {
          */
         private Rabbitmq rabbitmq;
 
+        /**
+         * zk配置
+         */
+        private ZkConfig zkConfig;
+
     }
 
     @Data
