@@ -22,6 +22,11 @@ public class Constants {
     public static final String ClientType = "clientType";
 
     /**
+     * 区分设备的
+     */
+    public static final String Imei = "imei";
+
+    /**
      * 读取时间 (心跳)
      */
     public static final String ReadTime = "readTime";
