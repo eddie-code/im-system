@@ -49,6 +49,11 @@ public class BootstrapConfig {
         private Long heartBeatTime;
 
         /**
+         * 多端登录的标识
+         */
+        private Integer loginModel;
+
+        /**
          * redis配置
          */
         private RedisConfig redis;

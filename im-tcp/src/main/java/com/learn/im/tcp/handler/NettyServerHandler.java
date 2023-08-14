@@ -8,6 +8,7 @@ import com.learn.im.codec.proto.Message;
 import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.ImConnectStatusEnum;
 import com.learn.im.common.enums.command.SystemCommand;
+import com.learn.im.common.model.UserClientDto;
 import com.learn.im.common.model.UserSession;
 import com.learn.im.tcp.redis.RedisManager;
 import com.learn.im.tcp.utils.SessionSocketHolder;
@@ -17,6 +18,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RMap;
+import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 
 import java.net.InetAddress;
@@ -86,6 +88,15 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
                     message.getMessageHeader().getImei(),
                     (NioSocketChannel) channelHandlerContext.channel()
             );
+
+            UserClientDto dto = new UserClientDto();
+            dto.setImei(message.getMessageHeader().getImei());
+            dto.setUserId(loginPack.getUserId());
+            dto.setClientType(message.getMessageHeader().getClientType());
+            dto.setAppId(message.getMessageHeader().getAppId());
+            RTopic topic = redissonClient.getTopic(Constants.RedisConstants.UserLoginChannel);
+            topic.publish(JSONObject.toJSONString(dto));
+
         } else if (command == SystemCommand.LOGOUT.getCommand()) { // 用户退出
             // TODO
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());

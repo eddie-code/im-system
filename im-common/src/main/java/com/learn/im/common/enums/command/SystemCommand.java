@@ -20,6 +20,12 @@ public enum SystemCommand implements Command {
      * 登出 9003
      */
     LOGOUT(0x232b),
+
+    /**
+     * 下线通知 用于多端互斥  9002
+     */
+    MUTUALLOGIN(0x232a),
+
     ;
 
     private int command;

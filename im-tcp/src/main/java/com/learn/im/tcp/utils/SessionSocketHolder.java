@@ -12,7 +12,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -39,6 +42,26 @@ public class SessionSocketHolder {
         dto.setClientType(clientType);
         dto.setUserId(userId);
         return CHANNELS.get(dto);
+    }
+
+    /**
+     *
+     * @param appId
+     * @param id 用户id
+     * @return
+     */
+    public static List<NioSocketChannel> get(Integer appId , String id) {
+
+        Set<UserClientDto> channelInfos = CHANNELS.keySet();
+        List<NioSocketChannel> channels = new ArrayList<>();
+
+        channelInfos.forEach(channel ->{
+            if(channel.getAppId().equals(appId) && id.equals(channel.getUserId())){
+                channels.add(CHANNELS.get(channel));
+            }
+        });
+
+        return channels;
     }
 
     public static void remove(Integer appId, String userId, Integer clientType, String imei) {

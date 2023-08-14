@@ -2,7 +2,7 @@ package com.learn.im.common;
 
 /**
  * @author: lee
- * @description:
+ * @description: 0-5 不同 ClientType
  **/
 public enum ClientType {
 

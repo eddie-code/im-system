@@ -51,6 +51,11 @@ public class Constants {
          */
         public static final String UserSessionConstants = ":userSession:";
 
+        /**
+         * 用户上线通知channel
+         */
+        public static final String UserLoginChannel = "signal/channel/LOGIN_USER_INNER_QUEUE";
+
     }
 
     public static class RabbitConstants{

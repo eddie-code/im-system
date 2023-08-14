@@ -56,8 +56,7 @@ public class Starter {
     public static void registerZK(BootstrapConfig config) throws UnknownHostException {
         // 获取ip地址
         String hostAddress = InetAddress.getLocalHost().getHostAddress();
-        ZkClient zkClient = new ZkClient(config.getLee().getZkConfig().getZkAddr(),
-                config.getLee().getZkConfig().getZkConnectTimeOut());
+        ZkClient zkClient = new ZkClient(config.getLee().getZkConfig().getZkAddr(), config.getLee().getZkConfig().getZkConnectTimeOut());
         ZKit zKit = new ZKit(zkClient);
         RegistryZK registryZK = new RegistryZK(zKit, hostAddress, config.getLee());
         Thread thread = new Thread(registryZK);
