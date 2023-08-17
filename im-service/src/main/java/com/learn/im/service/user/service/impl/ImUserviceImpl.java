@@ -2,6 +2,7 @@ package com.learn.im.service.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.enums.UserErrorCode;
 import com.learn.im.common.exception.ApplicationException;
@@ -14,12 +15,14 @@ import com.learn.im.service.user.service.ImUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description:
@@ -31,6 +34,8 @@ import java.util.List;
 public class ImUserviceImpl implements ImUserService {
 
     private final ImUserDataMapper imUserDataMapper;
+
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     public ResponseVO importUser(ImportUserReq req) {
@@ -162,6 +167,11 @@ public class ImUserviceImpl implements ImUserService {
             return ResponseVO.successResponse();
         }
         throw new ApplicationException(UserErrorCode.MODIFY_USER_ERROR);
+    }
+
+    @Override
+    public ResponseVO login(LoginReq req) {
+        return ResponseVO.successResponse();
     }
 
 }

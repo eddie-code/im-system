@@ -37,3 +37,7 @@ httpclient:
   connectionRequestTimeout: 2000
   socketTimeout: 5000
   staleConnectionCheckEnabled: true
+
+appConfig:
+  zkAddr: 192.168.56.101:2181 # zk连接地址
+  zkConnectTimeOut: 50000 #zk超时时间

@@ -22,5 +22,6 @@ public interface ImUserService {
 
     ResponseVO modifyUserInfo(ModifyUserInfoReq req);
 
+    ResponseVO login(LoginReq req);
 
 }
