@@ -32,17 +32,17 @@ public class BeanConfig {
 //        return new RandomHandle();
 //    }
 
-    @Bean
-    public RouteHandle routeHandle() {
-        return new LoopHandle();
-    }
-
 //    @Bean
 //    public RouteHandle routeHandle() {
-//        ConsistentHashHandle consistentHashHandle = new ConsistentHashHandle();
-//        TreeMapConsistentHash treeMapConsistentHash = new TreeMapConsistentHash();
-//        consistentHashHandle.setHash(treeMapConsistentHash);
-//        return consistentHashHandle;
+//        return new LoopHandle();
 //    }
+
+    @Bean
+    public RouteHandle routeHandle() {
+        ConsistentHashHandle consistentHashHandle = new ConsistentHashHandle();
+        TreeMapConsistentHash treeMapConsistentHash = new TreeMapConsistentHash();
+        consistentHashHandle.setHash(treeMapConsistentHash);
+        return consistentHashHandle;
+    }
 
 }
