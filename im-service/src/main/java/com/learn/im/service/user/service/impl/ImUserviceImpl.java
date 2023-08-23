@@ -1,7 +1,9 @@
 package com.learn.im.service.user.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.config.AppConfig;
 import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.enums.UserErrorCode;
@@ -12,6 +14,7 @@ import com.learn.im.service.user.model.req.*;
 import com.learn.im.service.user.model.resp.GetUserInfoResp;
 import com.learn.im.service.user.model.resp.ImportUserResp;
 import com.learn.im.service.user.service.ImUserService;
+import com.learn.im.service.utils.CallbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +38,15 @@ public class ImUserviceImpl implements ImUserService {
 
     private final ImUserDataMapper imUserDataMapper;
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final AppConfig appConfig;
+
+    private final CallbackService callbackService;
+    ;
 
     @Override
     public ResponseVO importUser(ImportUserReq req) {
 
-        if(req.getUserData().size() > 100){
+        if (req.getUserData().size() > 100) {
             return ResponseVO.errorResponse(UserErrorCode.IMPORT_SIZE_BEYOND);
         }
 
@@ -48,15 +54,15 @@ public class ImUserviceImpl implements ImUserService {
         List<String> successId = new ArrayList<>();
         List<String> errorId = new ArrayList<>();
 
-        for (ImUserDataEntity data:
-             req.getUserData()) {
+        for (ImUserDataEntity data :
+                req.getUserData()) {
             try {
                 data.setAppId(req.getAppId());
                 int insert = imUserDataMapper.insert(data);
-                if(insert == 1){
+                if (insert == 1) {
                     successId.add(data.getUserId());
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
                 errorId.add(data.getUserId());
             }
@@ -70,22 +76,22 @@ public class ImUserviceImpl implements ImUserService {
     @Override
     public ResponseVO<GetUserInfoResp> getUserInfo(GetUserInfoReq req) {
         QueryWrapper<ImUserDataEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("app_id",req.getAppId());
-        queryWrapper.in("user_id",req.getUserIds());
+        queryWrapper.eq("app_id", req.getAppId());
+        queryWrapper.in("user_id", req.getUserIds());
         queryWrapper.eq("del_flag", DelFlagEnum.NORMAL.getCode());
 
         List<ImUserDataEntity> userDataEntities = imUserDataMapper.selectList(queryWrapper);
         HashMap<String, ImUserDataEntity> map = new HashMap<>();
 
-        for (ImUserDataEntity data:
+        for (ImUserDataEntity data :
                 userDataEntities) {
-            map.put(data.getUserId(),data);
+            map.put(data.getUserId(), data);
         }
 
         List<String> failUser = new ArrayList<>();
-        for (String uid:
+        for (String uid :
                 req.getUserIds()) {
-            if(!map.containsKey(uid)){
+            if (!map.containsKey(uid)) {
                 failUser.add(uid);
             }
         }
@@ -99,12 +105,12 @@ public class ImUserviceImpl implements ImUserService {
     @Override
     public ResponseVO<ImUserDataEntity> getSingleUserInfo(String userId, Integer appId) {
         QueryWrapper objectQueryWrapper = new QueryWrapper<>();
-        objectQueryWrapper.eq("app_id",appId);
-        objectQueryWrapper.eq("user_id",userId);
+        objectQueryWrapper.eq("app_id", appId);
+        objectQueryWrapper.eq("user_id", userId);
         objectQueryWrapper.eq("del_flag", DelFlagEnum.NORMAL.getCode());
 
         ImUserDataEntity ImUserDataEntity = imUserDataMapper.selectOne(objectQueryWrapper);
-        if(ImUserDataEntity == null){
+        if (ImUserDataEntity == null) {
             return ResponseVO.errorResponse(UserErrorCode.USER_IS_NOT_EXIST);
         }
 
@@ -119,22 +125,22 @@ public class ImUserviceImpl implements ImUserService {
         List<String> errorId = new ArrayList();
         List<String> successId = new ArrayList();
 
-        for (String userId:
+        for (String userId :
                 req.getUserId()) {
             QueryWrapper wrapper = new QueryWrapper();
-            wrapper.eq("app_id",req.getAppId());
-            wrapper.eq("user_id",userId);
-            wrapper.eq("del_flag",DelFlagEnum.NORMAL.getCode());
+            wrapper.eq("app_id", req.getAppId());
+            wrapper.eq("user_id", userId);
+            wrapper.eq("del_flag", DelFlagEnum.NORMAL.getCode());
             int update = 0;
 
             try {
-                update =  imUserDataMapper.update(entity, wrapper);
-                if(update > 0){
+                update = imUserDataMapper.update(entity, wrapper);
+                if (update > 0) {
                     successId.add(userId);
-                }else{
+                } else {
                     errorId.add(userId);
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 errorId.add(userId);
             }
         }
@@ -149,21 +155,29 @@ public class ImUserviceImpl implements ImUserService {
     @Transactional
     public ResponseVO modifyUserInfo(ModifyUserInfoReq req) {
         QueryWrapper query = new QueryWrapper<>();
-        query.eq("app_id",req.getAppId());
-        query.eq("user_id",req.getUserId());
-        query.eq("del_flag",DelFlagEnum.NORMAL.getCode());
+        query.eq("app_id", req.getAppId());
+        query.eq("user_id", req.getUserId());
+        query.eq("del_flag", DelFlagEnum.NORMAL.getCode());
         ImUserDataEntity user = imUserDataMapper.selectOne(query);
-        if(user == null){
+        if (user == null) {
             throw new ApplicationException(UserErrorCode.USER_IS_NOT_EXIST);
         }
 
         ImUserDataEntity update = new ImUserDataEntity();
-        BeanUtils.copyProperties(req,update);
+        BeanUtils.copyProperties(req, update);
 
         update.setAppId(null);
         update.setUserId(null);
         int update1 = imUserDataMapper.update(update, query);
-        if(update1 == 1){
+        if (update1 == 1) {
+            // 回调
+            if (appConfig.isModifyUserAfterCallback()) {
+                callbackService.callback(
+                        req.getAppId(),
+                        Constants.CallbackCommand.ModifyUserAfter,
+                        JSONObject.toJSONString(req)
+                );
+            }
             return ResponseVO.successResponse();
         }
         throw new ApplicationException(UserErrorCode.MODIFY_USER_ERROR);

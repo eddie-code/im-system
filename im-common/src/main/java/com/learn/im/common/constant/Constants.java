@@ -58,7 +58,7 @@ public class Constants {
 
     }
 
-    public static class RabbitConstants{
+    public static class RabbitConstants {
 
         /**
          * im服务给用户服务投递的消息
@@ -91,4 +91,9 @@ public class Constants {
 
     }
 
+    public static class CallbackCommand {
+
+        public static final String ModifyUserAfter = "user.modify.after";
+
+    }
 }

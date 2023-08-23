@@ -38,4 +38,9 @@ public class AppConfig {
      */
     private String callbackUrl;
 
+    /**
+     * 用户资料变更之后回调开关
+     */
+    private boolean modifyUserAfterCallback;
+
 }
