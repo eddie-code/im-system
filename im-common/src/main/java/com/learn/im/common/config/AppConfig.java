@@ -33,4 +33,9 @@ public class AppConfig {
      */
     private Integer consistentHashWay;
 
+    /**
+     * 回调Url
+     */
+    private String callbackUrl;
+
 }

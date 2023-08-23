@@ -17,7 +17,6 @@ logging:
 server:
   port: 8000
 
-
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
@@ -30,6 +29,7 @@ mybatis-plus:
 #  configuration:
 #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
+# Apache
 httpclient:
   maxTotal: 100
   defaultMaxPerRoute: 50
@@ -37,6 +37,7 @@ httpclient:
   connectionRequestTimeout: 2000
   socketTimeout: 5000
   staleConnectionCheckEnabled: true
+  callbackUrl: http://127.0.0.1:8000/callback
 
 appConfig:
   zkAddr: 192.168.56.101:2181 # zk连接地址
