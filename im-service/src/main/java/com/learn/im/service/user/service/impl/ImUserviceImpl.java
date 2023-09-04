@@ -2,11 +2,13 @@ package com.learn.im.service.user.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.learn.im.codec.pack.user.UserModifyPack;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.config.AppConfig;
 import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.enums.UserErrorCode;
+import com.learn.im.common.enums.command.UserEventCommand;
 import com.learn.im.common.exception.ApplicationException;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.dao.mapper.ImUserDataMapper;
@@ -15,6 +17,7 @@ import com.learn.im.service.user.model.resp.GetUserInfoResp;
 import com.learn.im.service.user.model.resp.ImportUserResp;
 import com.learn.im.service.user.service.ImUserService;
 import com.learn.im.service.utils.CallbackService;
+import com.learn.im.service.utils.MessageProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +44,8 @@ public class ImUserviceImpl implements ImUserService {
     private final AppConfig appConfig;
 
     private final CallbackService callbackService;
-    ;
+
+    private final MessageProducer messageProducer;
 
     @Override
     public ResponseVO importUser(ImportUserReq req) {
@@ -170,6 +174,18 @@ public class ImUserviceImpl implements ImUserService {
         update.setUserId(null);
         int update1 = imUserDataMapper.update(update, query);
         if (update1 == 1) {
+            // 通知
+            UserModifyPack pack = new UserModifyPack();
+            BeanUtils.copyProperties(req, pack);
+            messageProducer.sendToUser(
+                    req.getUserId(),
+                    req.getClientType(),
+                    req.getImei(),
+                    UserEventCommand.USER_MODIFY,
+                    pack,
+                    req.getAppId()
+            );
+
             // 回调
             if (appConfig.isModifyUserAfterCallback()) {
                 callbackService.callback(

@@ -76,10 +76,13 @@ public class MessageProducer {
     }
 
     public void sendToUser(String toId, Integer clientType, String imei, Command command, Object data, Integer appId) {
+        // 判断是否后台管理调用, 因为后台管理调用是没有 imei 号
         if (clientType != null && StringUtils.isNotBlank(imei)) {
+            // 指定端
             ClientInfo clientInfo = new ClientInfo(appId, clientType, imei);
             sendToUserExceptClient(toId, command, data, clientInfo);
         } else {
+            // 发送所有的端
             sendToUser(toId, command, data, appId);
         }
     }
