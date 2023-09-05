@@ -1,7 +1,11 @@
 package com.learn.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.learn.im.codec.pack.friendship.AddFriendGroupMemberPack;
+import com.learn.im.codec.pack.friendship.DeleteFriendGroupMemberPack;
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.enums.command.FriendshipEventCommand;
+import com.learn.im.common.model.ClientInfo;
 import com.learn.im.service.friendship.dao.ImFriendShipGroupEntity;
 import com.learn.im.service.friendship.dao.ImFriendShipGroupMemberEntity;
 import com.learn.im.service.friendship.dao.mapper.ImFriendShipGroupMemberMapper;
@@ -11,6 +15,7 @@ import com.learn.im.service.friendship.service.ImFriendShipGroupMemberService;
 import com.learn.im.service.friendship.service.ImFriendShipGroupService;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.service.ImUserService;
+import com.learn.im.service.utils.MessageProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +45,9 @@ public class ImFriendShipGroupMemberServiceImpl implements ImFriendShipGroupMemb
     @Autowired
     private ImFriendShipGroupMemberService thisService;
 
+    @Autowired
+    private MessageProducer messageProducer;
+
     @Override
     @Transactional
     public ResponseVO addGroupMember(AddFriendShipGroupMemberReq req) {
@@ -61,6 +69,17 @@ public class ImFriendShipGroupMemberServiceImpl implements ImFriendShipGroupMemb
             }
         }
 
+        AddFriendGroupMemberPack pack = new AddFriendGroupMemberPack();
+        pack.setFromId(req.getFromId());
+        pack.setGroupName(req.getGroupName());
+        pack.setToIds(successId);
+        messageProducer.sendToUserExceptClient(
+                req.getFromId(),
+                FriendshipEventCommand.FRIEND_GROUP_MEMBER_ADD,
+                pack,
+                new ClientInfo(req.getAppId(),req.getClientType(),req.getImei())
+        );
+
         return ResponseVO.successResponse(successId);
     }
 
@@ -72,17 +91,29 @@ public class ImFriendShipGroupMemberServiceImpl implements ImFriendShipGroupMemb
             return group;
         }
 
-        ArrayList list = new ArrayList();
+        List<String> successId = new ArrayList<>();
         for (String toId : req.getToIds()) {
             ResponseVO<ImUserDataEntity> singleUserInfo = imUserService.getSingleUserInfo(toId, req.getAppId());
             if (singleUserInfo.isOk()) {
                 int i = deleteGroupMember(group.getData().getGroupId(), toId);
                 if (i == 1) {
-                    list.add(toId);
+                    successId.add(toId);
                 }
             }
         }
-        return ResponseVO.successResponse(list);
+
+        DeleteFriendGroupMemberPack pack = new DeleteFriendGroupMemberPack();
+        pack.setFromId(req.getFromId());
+        pack.setGroupName(req.getGroupName());
+        pack.setToIds(successId);
+        messageProducer.sendToUserExceptClient(
+                req.getFromId(),
+                FriendshipEventCommand.FRIEND_GROUP_MEMBER_DELETE,
+                pack,
+                new ClientInfo(req.getAppId(),req.getClientType(),req.getImei()))
+        ;
+
+        return ResponseVO.successResponse(successId);
     }
 
     @Override

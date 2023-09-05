@@ -10,8 +10,20 @@ public interface ImFriendShipRequestService {
 
     public ResponseVO addFienshipRequest(String fromId, FriendDto dto, Integer appId);
 
+    /**
+     * 审批好友申请
+     *
+     * @param req
+     * @return
+     */
     public ResponseVO approverFriendRequest(ApproverFriendRequestReq req);
 
+    /**
+     * 已读所有好友的申请
+     *
+     * @param req
+     * @return
+     */
     public ResponseVO readFriendShipRequestReq(ReadFriendShipRequestReq req);
 
     public ResponseVO getFriendRequest(String fromId, Integer appId);
