@@ -4,6 +4,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.learn.im.codec.pack.group.CreateGroupPack;
+import com.learn.im.codec.pack.group.DestroyGroupPack;
+import com.learn.im.codec.pack.group.UpdateGroupInfoPack;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.config.AppConfig;
 import com.learn.im.common.constant.Constants;
@@ -11,7 +14,9 @@ import com.learn.im.common.enums.GroupErrorCode;
 import com.learn.im.common.enums.GroupMemberRoleEnum;
 import com.learn.im.common.enums.GroupStatusEnum;
 import com.learn.im.common.enums.GroupTypeEnum;
+import com.learn.im.common.enums.command.GroupEventCommand;
 import com.learn.im.common.exception.ApplicationException;
+import com.learn.im.common.model.ClientInfo;
 import com.learn.im.service.group.dao.ImGroupEntity;
 import com.learn.im.service.group.dao.mapper.ImGroupMapper;
 import com.learn.im.service.group.model.callback.DestroyGroupCallbackDto;
@@ -22,6 +27,7 @@ import com.learn.im.service.group.model.resp.GetRoleInGroupResp;
 import com.learn.im.service.group.service.ImGroupMemberService;
 import com.learn.im.service.group.service.ImGroupService;
 import com.learn.im.service.utils.CallbackService;
+import com.learn.im.service.utils.GroupMessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +58,9 @@ public class ImGroupServiceImpl implements ImGroupService {
 
     @Autowired
     CallbackService callbackService;
+
+    @Autowired
+    GroupMessageProducer groupMessageProducer;
 
     @Override
     public ResponseVO importGroup(ImportGroupReq req) {
@@ -144,6 +153,15 @@ public class ImGroupServiceImpl implements ImGroupService {
             );
         }
 
+        CreateGroupPack createGroupPack = new CreateGroupPack();
+        BeanUtils.copyProperties(imGroupEntity, createGroupPack);
+        groupMessageProducer.producer(req.getOperater(),
+                GroupEventCommand.CREATED_GROUP,
+                createGroupPack,
+                new ClientInfo(req.getAppId(), req.getClientType(),
+                        req.getImei())
+        );
+
         return ResponseVO.successResponse();
     }
 
@@ -208,6 +226,14 @@ public class ImGroupServiceImpl implements ImGroupService {
                     JSONObject.toJSONString(imGroupDataMapper.selectOne(query)));
         }
 
+        UpdateGroupInfoPack pack = new UpdateGroupInfoPack();
+        BeanUtils.copyProperties(req, pack);
+        groupMessageProducer.producer(
+                req.getOperater(),
+                GroupEventCommand.UPDATED_GROUP,
+                pack,
+                new ClientInfo(req.getAppId(), req.getClientType(), req.getImei())
+        );
 
         return ResponseVO.successResponse();
     }
@@ -306,6 +332,15 @@ public class ImGroupServiceImpl implements ImGroupService {
                     JSONObject.toJSONString(dto)
             );
         }
+
+        DestroyGroupPack pack = new DestroyGroupPack();
+        pack.setGroupId(req.getGroupId());
+        groupMessageProducer.producer(
+                req.getOperater(),
+                GroupEventCommand.DESTROY_GROUP,
+                pack,
+                new ClientInfo(req.getAppId(), req.getClientType(), req.getImei())
+        );
 
         return ResponseVO.successResponse();
     }
