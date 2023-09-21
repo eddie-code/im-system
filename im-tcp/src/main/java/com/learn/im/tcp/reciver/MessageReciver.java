@@ -1,6 +1,10 @@
 package com.learn.im.tcp.reciver;
 
+import com.alibaba.fastjson.JSONObject;
+import com.learn.im.codec.proto.MessagePack;
 import com.learn.im.common.constant.Constants;
+import com.learn.im.tcp.reciver.process.BaseProcess;
+import com.learn.im.tcp.reciver.process.ProcessFactory;
 import com.learn.im.tcp.utils.MqFactory;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -50,8 +54,20 @@ public class MessageReciver {
                         @Override
                         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                             // TODO 处理消息服务, 发来的消息
-                            String msgStr = new String(body);
-                            log.info(msgStr); // 参考教程是没有提示到需要创建Exchanges=(messageService2Pipeline), 可能这个原因导致打印不出来
+                            try {
+                                String msgStr = new String(body);
+                                // 参考教程是没有提示到需要创建Exchanges=(messageService2Pipeline), 可能这个原因导致打印不出来
+                                log.info(msgStr);
+                                MessagePack messagePack = JSONObject.parseObject(msgStr, MessagePack.class);
+                                BaseProcess messageProcess = ProcessFactory.getMessageProcess(messagePack.getCommand());
+                                messageProcess.process(messagePack);
+
+                                channel.basicAck(envelope.getDeliveryTag(),false);
+
+                            }catch (Exception e){
+                                e.printStackTrace();
+                                channel.basicNack(envelope.getDeliveryTag(),false,false);
+                            }
                         }
                     }
             );

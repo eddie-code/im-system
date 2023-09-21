@@ -8,8 +8,8 @@ spring:
     password: ${MYSQL_PASS:root1234}
 
   redis:
-    host: ${REDIS_HOST:192.168.1.132}
-    port: ${REDIS_PORT:6379}
+    host: 192.168.56.101
+    port: 6379
     jedis:
       pool:
         max-active: 100
@@ -18,9 +18,9 @@ spring:
         min-idle: 10
 
   rabbitmq:
-    host: localhost
+    host: 192.168.56.101
     port: 5672
-    addresses: localhost
+    addresses: 192.168.56.101
     username: guest
     password: guest
     #    virtual-host:

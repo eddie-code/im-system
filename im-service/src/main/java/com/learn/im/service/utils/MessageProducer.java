@@ -1,7 +1,9 @@
 package com.learn.im.service.utils;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.learn.im.codec.proto.MessagePack;
+import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.command.Command;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.UserSession;
@@ -29,11 +31,13 @@ public class MessageProducer {
     @Autowired
     UserSessionUtils userSessionUtils;
 
+    private String queueName = Constants.RabbitConstants.MessageService2Im;
+
     public boolean sendMessage(UserSession session, Object msg) {
         try {
             log.info("send message == " + msg);
             // BrokerId 区别那个服务器id
-            rabbitTemplate.convertAndSend("", session.getBrokerId() + "", msg);
+            rabbitTemplate.convertAndSend(queueName, session.getBrokerId() + "", msg);
             return true;
         } catch (Exception e) {
             log.error("send error :" + e.getMessage());
@@ -64,6 +68,7 @@ public class MessageProducer {
      * 发送给所有端的方法
      */
     public List<ClientInfo> sendToUser(String toId, Command command, Object data, Integer appId) {
+        // redis获取用户
         List<UserSession> userSession = userSessionUtils.getUserSession(appId, toId);
         List<ClientInfo> list = new ArrayList<>();
         for (UserSession session : userSession) {

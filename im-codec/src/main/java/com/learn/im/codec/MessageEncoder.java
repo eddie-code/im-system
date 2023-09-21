@@ -1,4 +1,4 @@
-package com.learn.im.codec.utils;
+package com.learn.im.codec;
 
 import com.alibaba.fastjson.JSONObject;
 import com.learn.im.codec.proto.MessagePack;

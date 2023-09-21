@@ -2,7 +2,7 @@ package com.learn.im.tcp.server;
 
 import com.learn.im.codec.MessageDecoder;
 import com.learn.im.codec.config.BootstrapConfig;
-import com.learn.im.codec.utils.MessageEncoder;
+import com.learn.im.codec.MessageEncoder;
 import com.learn.im.tcp.handler.HeartBeatHandler;
 import com.learn.im.tcp.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
@@ -12,7 +12,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
