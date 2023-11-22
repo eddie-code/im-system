@@ -31,9 +31,12 @@ public class SigAPI {
         this.key = key;
     }
 
+    /**
+     * 接口校验 userSign 字段，生成的参数
+     */
     public static void main(String[] args) throws InterruptedException {
         SigAPI asd = new SigAPI(10000, "123456");
-        String sign = asd.genUserSig("lee", 100000000);
+        String sign = asd.genUserSig("lld", 100000000);
 //        Thread.sleep(2000L);
         JSONObject jsonObject = decodeUserSig(sign);
         System.out.println("sign:" + sign);

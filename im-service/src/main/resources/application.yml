@@ -73,6 +73,7 @@ httpclient:
   staleConnectionCheckEnabled: true
 
 appConfig:
+#  privateKey: 123456
   zkAddr: 192.168.56.101:2181 # zk连接地址
   zkConnectTimeOut: 50000 #zk超时时间
   imRouteWay: 1 # 路由策略1轮训 2随机 3hash
