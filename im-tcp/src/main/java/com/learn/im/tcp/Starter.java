@@ -19,7 +19,7 @@ import java.net.UnknownHostException;
 
 /**
  * @author lee
- * @description
+ * @description IM服务层
  */
 public class Starter {
 

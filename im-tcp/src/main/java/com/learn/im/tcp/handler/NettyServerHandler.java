@@ -10,6 +10,7 @@ import com.learn.im.common.enums.ImConnectStatusEnum;
 import com.learn.im.common.enums.command.SystemCommand;
 import com.learn.im.common.model.UserClientDto;
 import com.learn.im.common.model.UserSession;
+import com.learn.im.tcp.publish.MqMessageProducer;
 import com.learn.im.tcp.redis.RedisManager;
 import com.learn.im.tcp.utils.SessionSocketHolder;
 import io.netty.channel.ChannelHandlerContext;
@@ -98,11 +99,15 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             topic.publish(JSONObject.toJSONString(dto));
 
         } else if (command == SystemCommand.LOGOUT.getCommand()) { // 用户退出
-            // TODO
+            // 删除session
+            // redis 删除
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) { // 心跳检测
             // 设置为当前时间
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
+        } else {
+            // 消息发给逻辑层
+            MqMessageProducer.sendMessage(message, command);
         }
     }
 
