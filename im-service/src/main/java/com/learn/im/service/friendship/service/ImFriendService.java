@@ -9,7 +9,7 @@ import com.learn.im.service.friendship.model.req.*;
  * @author: lee
  * @version: 1.0
  */
-public interface ImFriendShipService {
+public interface ImFriendService {
 
     /**
      * 导入关系链（用于第三方系统）

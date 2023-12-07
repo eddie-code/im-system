@@ -13,10 +13,9 @@ import com.learn.im.service.friendship.dao.mapper.ImFriendShipRequestMapper;
 import com.learn.im.service.friendship.model.req.ApproverFriendRequestReq;
 import com.learn.im.service.friendship.model.req.FriendDto;
 import com.learn.im.service.friendship.model.req.ReadFriendShipRequestReq;
-import com.learn.im.service.friendship.service.ImFriendShipService;
+import com.learn.im.service.friendship.service.ImFriendService;
 import com.learn.im.service.friendship.service.ImFriendShipRequestService;
 import com.learn.im.service.utils.MessageProducer;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,7 @@ public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestServic
     private ImFriendShipRequestMapper imFriendShipRequestMapper;
 
     @Autowired
-    private ImFriendShipService imFriendShipService;
+    private ImFriendService imFriendService;
 
     @Autowired
     private MessageProducer messageProducer;
@@ -131,7 +130,7 @@ public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestServic
             dto.setAddWording(imFriendShipRequestEntity.getAddWording());
             dto.setRemark(imFriendShipRequestEntity.getRemark());
             dto.setToId(imFriendShipRequestEntity.getToId());
-            ResponseVO responseVO = imFriendShipService.doAddFriend(req, imFriendShipRequestEntity.getFromId(), dto, req.getAppId());
+            ResponseVO responseVO = imFriendService.doAddFriend(req, imFriendShipRequestEntity.getFromId(), dto, req.getAppId());
 //            if(!responseVO.isOk()){
 ////                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 //                return responseVO;

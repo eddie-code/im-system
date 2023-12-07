@@ -7,7 +7,6 @@ import com.learn.im.codec.pack.friendship.*;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.config.AppConfig;
 import com.learn.im.common.constant.Constants;
-import com.learn.im.common.enums.AllowFriendTypeEnum;
 import com.learn.im.common.enums.CheckFriendShipTypeEnum;
 import com.learn.im.common.enums.FriendShipErrorCode;
 import com.learn.im.common.enums.FriendShipStatusEnum;
@@ -22,13 +21,11 @@ import com.learn.im.service.friendship.model.callback.DeleteFriendAfterCallbackD
 import com.learn.im.service.friendship.model.req.*;
 import com.learn.im.service.friendship.model.resp.CheckFriendShipResp;
 import com.learn.im.service.friendship.model.resp.ImportFriendShipResp;
-import com.learn.im.service.friendship.service.ImFriendShipService;
-import com.learn.im.service.friendship.service.ImFriendShipRequestService;
+import com.learn.im.service.friendship.service.ImFriendService;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.service.ImUserService;
 import com.learn.im.service.utils.CallbackService;
 import com.learn.im.service.utils.MessageProducer;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -49,7 +46,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class ImFriendShipServiceImpl implements ImFriendShipService {
+public class ImFriendServiceImpl implements ImFriendService {
 
     @Autowired
     private ImFriendShipMapper imFriendShipMapper;
