@@ -73,7 +73,7 @@ httpclient:
   staleConnectionCheckEnabled: true
 
 appConfig:
-#  privateKey: 123456
+  privateKey: 123456
   zkAddr: 192.168.56.101:2181 # zk连接地址
   zkConnectTimeOut: 50000 #zk超时时间
   imRouteWay: 1 # 路由策略1轮训 2随机 3hash
@@ -92,3 +92,5 @@ appConfig:
   deleteGroupMemberAfterCallback: true # 删除群成员之后回调
   addGroupMemberAfterCallback: true # 拉人入群之后回调
   addGroupMemberBeforeCallback: true # 拉人入群之前回调
+  sendMessageCheckFriend: false # 发送消息是否校验关系链
+  sendMessageCheckBlack: false # 发送消息是否校验黑名单
