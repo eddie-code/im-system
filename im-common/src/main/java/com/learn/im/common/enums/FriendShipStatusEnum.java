@@ -7,6 +7,9 @@ public enum FriendShipStatusEnum {
      */
     FRIEND_STATUS_NO_FRIEND(0),
 
+    /**
+     * 好友状态正常
+     */
     FRIEND_STATUS_NORMAL(1),
 
     FRIEND_STATUS_DELETE(2),

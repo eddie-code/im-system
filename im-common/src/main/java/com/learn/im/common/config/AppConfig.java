@@ -31,6 +31,16 @@ public class AppConfig {
     private Integer imRouteWay;
 
     /**
+     * 发送消息是否校验关系链
+     */
+    private boolean sendMessageCheckFriend;
+
+    /**
+     * 发送消息是否校验黑名单
+     */
+    private boolean sendMessageCheckBlack;
+
+    /**
      * 如果选用一致性hash的话具体hash算法
      */
     private Integer consistentHashWay;
