@@ -21,7 +21,7 @@ version = 1
 clientType = 4
 messageType = 0x0
 appId = 10000
-userId = 'lee'
+userId = 'lld'
 
 ## 数据转换为bytes
 commandByte = command.to_bytes(4,'big')

@@ -27,7 +27,7 @@ import java.net.InterfaceAddress;
 
 /**
  * @author lee
- * @description
+ * @description 处理文本协议数据，处理Message类型的数据，websocket专门处理文本的frame就是Message
  */
 @Slf4j
 public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
@@ -38,6 +38,13 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
         this.brokerId = brokerId;
     }
 
+    /**
+     * 读到客户端的内容并且向客户端去写内容
+     *
+     * @param channelHandlerContext
+     * @param message
+     * @throws Exception
+     */
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message message) throws Exception {
 
@@ -64,6 +71,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userSession.setUserId(loginPack.getUserId());
             userSession.setConnectState(ImConnectStatusEnum.ONLINE_STATUS.getCode());
             userSession.setBrokerId(brokerId);
+            userSession.setImei(message.getMessageHeader().getImei());
 
             try {
                 InetAddress localHost = InetAddress.getLocalHost();
@@ -78,7 +86,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             // 用户session，appId + UserSessionConstants + 用户id  最终存入Hash格式例子： 10000:userSession:lee
             RMap<String, String> map = redissonClient.getMap(message.getMessageHeader().getAppId() + Constants.RedisConstants.UserSessionConstants + loginPack.getUserId());
             map.put(
-                    String.valueOf(message.getMessageHeader().getClientType()),
+                    message.getMessageHeader().getClientType() + ":" + message.getMessageHeader().getImei(),
                     JSONObject.toJSONString(userSession)
             );
             // channel 信息保存系session里面

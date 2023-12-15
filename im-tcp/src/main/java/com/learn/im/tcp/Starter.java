@@ -12,7 +12,6 @@ import org.I0Itec.zkclient.ZkClient;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,14 +35,16 @@ public class Starter {
             InputStream inputStream = new FileInputStream(path);
             BootstrapConfig bootstrapConfig = yaml.loadAs(inputStream, BootstrapConfig.class);
 
+            // 启动服务
             new LeeServer(bootstrapConfig.getLee()).start();
             new LeeWebSocketServer(bootstrapConfig.getLee()).start();
+
             // 初始化redis
             RedisManager.init(bootstrapConfig);
             // 初始化mq
             MqFactory.init(bootstrapConfig.getLee().getRabbitmq());
             // 消息接收器
-            MessageReciver.init(String.valueOf(bootstrapConfig.getLee().getBrokerId()));
+            MessageReciver.init(bootstrapConfig.getLee().getBrokerId() + "");
             // zookeeper 注册
             registerZK(bootstrapConfig);
 

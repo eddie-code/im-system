@@ -36,7 +36,7 @@ public class MqFactory {
             channel = getConnection().createChannel();
             channelMap.put(channelName, channel);
         }
-        System.out.println("channel: " + channel);
+//        System.out.println("channel: " + channel);
         return channel;
     }
 

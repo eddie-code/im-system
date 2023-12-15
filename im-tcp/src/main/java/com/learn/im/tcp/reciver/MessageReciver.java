@@ -27,7 +27,7 @@ public class MessageReciver {
     private static void startReciverMessage() {
 
         try {
-            // 获取MQ的通道
+            // 获取MQ的通道 (Exchanges)
             Channel channel = MqFactory.getChannel(Constants.RabbitConstants.MessageService2Im + brokerId);
 
             // 队列声明
@@ -41,8 +41,8 @@ public class MessageReciver {
 
             // 绑定交换机 （暂时没有routingKey, 后面补充）
             channel.queueBind(
-                    Constants.RabbitConstants.MessageService2Im + brokerId, // Queue
-                    Constants.RabbitConstants.MessageService2Im + brokerId, // Exchanges
+                    Constants.RabbitConstants.MessageService2Im + brokerId,  // Queue
+                    Constants.RabbitConstants.MessageService2Im,  // Exchanges
                     brokerId // routingKey
             );
 
@@ -57,7 +57,7 @@ public class MessageReciver {
                             try {
                                 String msgStr = new String(body);
                                 // 参考教程是没有提示到需要创建Exchanges=(messageService2Pipeline), 可能这个原因导致打印不出来
-                                log.info(msgStr);
+                                log.info("消费: {}",msgStr);
                                 MessagePack messagePack = JSONObject.parseObject(msgStr, MessagePack.class);
                                 BaseProcess messageProcess = ProcessFactory.getMessageProcess(messagePack.getCommand());
                                 messageProcess.process(messagePack);
