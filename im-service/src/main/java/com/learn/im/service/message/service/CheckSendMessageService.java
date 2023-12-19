@@ -6,6 +6,10 @@ import com.learn.im.common.enums.*;
 import com.learn.im.service.friendship.dao.ImFriendShipEntity;
 import com.learn.im.service.friendship.model.req.GetRelationReq;
 import com.learn.im.service.friendship.service.ImFriendService;
+import com.learn.im.service.group.dao.ImGroupEntity;
+import com.learn.im.service.group.model.resp.GetRoleInGroupResp;
+import com.learn.im.service.group.service.ImGroupMemberService;
+import com.learn.im.service.group.service.ImGroupService;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.service.ImUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +27,12 @@ public class CheckSendMessageService {
 
     @Autowired
     ImFriendService imFriendService;
+
+    @Autowired
+    ImGroupService imGroupService;
+
+    @Autowired
+    ImGroupMemberService imGroupMemberService;
 
     @Autowired
     AppConfig appConfig;
@@ -111,6 +121,50 @@ public class CheckSendMessageService {
                     return ResponseVO.errorResponse(FriendShipErrorCode.TARGET_IS_BLACK_YOU);
                 }
             }
+        }
+
+        return ResponseVO.successResponse();
+    }
+
+    /**
+     * 发送群聊消息前置校验
+     *
+     * @param fromId
+     * @param groupId
+     * @param appId
+     * @return
+     */
+    public ResponseVO checkGroupMessage(String fromId, String groupId, Integer appId) {
+
+        ResponseVO responseVO = checkSenderFromIdAndMute(fromId, appId);
+        if (!responseVO.isOk()) {
+            return responseVO;
+        }
+
+        //判断群逻辑
+        ResponseVO<ImGroupEntity> group = imGroupService.getGroup(groupId, appId);
+        if (!group.isOk()) {
+            return group;
+        }
+
+        //判断群成员是否在群内
+        ResponseVO<GetRoleInGroupResp> roleInGroupOne = imGroupMemberService.getRoleInGroupOne(groupId, fromId, appId);
+        if (!roleInGroupOne.isOk()) {
+            return roleInGroupOne;
+        }
+        GetRoleInGroupResp data = roleInGroupOne.getData();
+
+        //判断群是否被禁言
+        //如果禁言 只有裙管理和群主可以发言
+        ImGroupEntity groupData = group.getData();
+        // 是否全员禁言，0 不禁言；1 全员禁言
+        if (groupData.getMute() == GroupMuteTypeEnum.MUTE.getCode() && (data.getRole() == GroupMemberRoleEnum.MAMAGER.getCode() || data.getRole() == GroupMemberRoleEnum.OWNER.getCode())) {
+            return ResponseVO.errorResponse(GroupErrorCode.THIS_GROUP_IS_MUTE); // 该群禁止发言
+        }
+
+        // 禁言时间大于当前时间
+        if (data.getSpeakDate() != null && data.getSpeakDate() > System.currentTimeMillis()) {
+            return ResponseVO.errorResponse(GroupErrorCode.GROUP_MEMBER_IS_SPEAK); // 群成员被禁言
         }
 
         return ResponseVO.successResponse();
