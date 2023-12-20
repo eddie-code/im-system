@@ -1,6 +1,8 @@
 package com.learn.im.common.enums.command;
 
-//2
+/**
+ * 16进制转10进制
+ */
 public enum GroupEventCommand implements Command {
 
 
@@ -60,7 +62,7 @@ public enum GroupEventCommand implements Command {
      */
     SPEAK_GOUP_MEMBER(2010),
 
-    //群聊消息收发 2104
+    //群聊消息收发 2104  -
     MSG_GROUP(0x838),
 
     //发送消息已读   2106

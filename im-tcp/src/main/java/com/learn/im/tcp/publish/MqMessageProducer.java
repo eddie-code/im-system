@@ -25,6 +25,12 @@ public class MqMessageProducer {
     public static void sendMessage(Message message, Integer command) {
         Channel channel = null;
         String channelName = Constants.RabbitConstants.Im2MessageService;
+
+        // 判断是否群组
+        if (command.toString().startsWith("2")) {
+            channelName = Constants.RabbitConstants.Im2GroupService;
+        }
+
         try {
             channel = MqFactory.getChannel(channelName);
 
