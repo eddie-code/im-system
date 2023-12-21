@@ -5,6 +5,7 @@ import com.learn.im.common.ResponseVO;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.service.message.mq.MessageStoreService;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ public class P2PMessageService {
     @Autowired
     MessageProducer messageProducer;
 
+    @Autowired
+    MessageStoreService messageStoreService;
+
     public void process(MessageContent messageContent) {
 
         String fromId = messageContent.getFromId();
@@ -36,6 +40,8 @@ public class P2PMessageService {
         //发送方和接收方是否是好友
         ResponseVO responseVO = imServerPermissionCheck(fromId, toId, appId);
         if (responseVO.isOk()) {
+            // 插入数据
+            messageStoreService.storeP2PMessage(messageContent);
             // 1、回ack成功给自己
             ack(messageContent, ResponseVO.successResponse());
             // 2、发送消息给同步在线端

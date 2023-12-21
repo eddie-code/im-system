@@ -9,6 +9,7 @@ import com.learn.im.common.route.algorithm.consistenthash.ConsistentHashHandle;
 import com.learn.im.common.route.algorithm.consistenthash.TreeMapConsistentHash;
 import com.learn.im.common.route.algorithm.loop.LoopHandle;
 import com.learn.im.common.route.algorithm.random.RandomHandle;
+import com.learn.im.service.utils.SnowflakeIdWorker;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -82,6 +83,16 @@ public class BeanConfig {
         }
         // 5. 返回路由处理器实例
         return routeHandle;
+    }
+
+    @Bean
+    public EasySqlInjector easySqlInjector () {
+        return new EasySqlInjector();
+    }
+
+    @Bean
+    public SnowflakeIdWorker buildSnowflakeSeq() throws Exception {
+        return new SnowflakeIdWorker(0);
     }
 
 }
