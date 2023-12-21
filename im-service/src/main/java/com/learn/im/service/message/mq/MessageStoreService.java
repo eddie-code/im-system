@@ -1,7 +1,10 @@
 package com.learn.im.service.message.mq;
 
 import com.learn.im.common.enums.DelFlagEnum;
+import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.service.group.dao.ImGroupMessageHistoryEntity;
+import com.learn.im.service.group.dao.mapper.ImGroupMessageHistoryMapper;
 import com.learn.im.service.message.dao.ImMessageBodyEntity;
 import com.learn.im.service.message.dao.ImMessageHistoryEntity;
 import com.learn.im.service.message.dao.mapper.ImMessageBodyMapper;
@@ -32,6 +35,9 @@ public class MessageStoreService {
 
     @Autowired
     SnowflakeIdWorker snowflakeIdWorker;
+
+    @Autowired
+    ImGroupMessageHistoryMapper imGroupMessageHistoryMapper;
 
 
     @Transactional
@@ -79,6 +85,29 @@ public class MessageStoreService {
         list.add(fromHistory);
         list.add(toHistory);
         return list;
+    }
+
+    @Transactional
+    public void storeGroupMessage(GroupChatMessageContent messageContent) {
+        // messageContent 转换成 messageBody
+        ImMessageBodyEntity imMessageBodyEntity = extractMessageBody(messageContent);
+        // 插入 messageBody
+        imMessageBodyMapper.insert(imMessageBodyEntity);
+        // 转化成 messageHistory
+        ImGroupMessageHistoryEntity imGroupMessageHistoryEntity = extractToGroupMessageHistory(messageContent, imMessageBodyEntity);
+        // 插入数据
+        imGroupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
+        // MessageKey 返回给调用者
+        messageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
+    }
+
+    private ImGroupMessageHistoryEntity extractToGroupMessageHistory(GroupChatMessageContent messageContent , ImMessageBodyEntity messageBodyEntity){
+        ImGroupMessageHistoryEntity result = new ImGroupMessageHistoryEntity();
+        BeanUtils.copyProperties(messageContent,result);
+        result.setGroupId(messageContent.getGroupId());
+        result.setMessageKey(messageBodyEntity.getMessageKey());
+        result.setCreateTime(System.currentTimeMillis());
+        return result;
     }
 
 }

@@ -6,6 +6,7 @@ import com.learn.im.common.enums.command.GroupEventCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.service.message.mq.MessageStoreService;
 import com.learn.im.service.message.service.CheckSendMessageService;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,9 @@ public class GroupMessageService {
     @Autowired
     ImGroupMemberService imGroupMemberService;
 
+    @Autowired
+    MessageStoreService messageStoreService;
+
     public void process(GroupChatMessageContent messageContent) {
 
         String fromId = messageContent.getFromId();
@@ -41,6 +45,8 @@ public class GroupMessageService {
         //发送方和接收方是否是好友
         ResponseVO responseVO = imServerPermissionCheck(fromId, groupId, appId);
         if (responseVO.isOk()) {
+            // 插入数据
+            messageStoreService.storeGroupMessage(messageContent);
             // 1、回ack成功给自己
             ack(messageContent, ResponseVO.successResponse());
             // 2、发送消息给同步在线端
