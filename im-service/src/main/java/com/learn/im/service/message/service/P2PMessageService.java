@@ -1,13 +1,17 @@
 package com.learn.im.service.message.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.learn.im.codec.pack.message.ChatMessageAck;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.service.message.model.req.SendMessageReq;
+import com.learn.im.service.message.model.resp.SendMessageResp;
 import com.learn.im.service.message.mq.MessageStoreService;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -112,4 +116,22 @@ public class P2PMessageService {
         return responseVO;
     }
 
+    public SendMessageResp send(SendMessageReq req) {
+
+        SendMessageResp sendMessageResp = new SendMessageResp();
+        MessageContent messageContent = new MessageContent();
+        BeanUtils.copyProperties(req, messageContent);
+
+        //插入数据
+        messageStoreService.storeP2PMessage(messageContent);
+        sendMessageResp.setMessageKey(messageContent.getMessageKey());
+        sendMessageResp.setMessageTime(System.currentTimeMillis());
+
+        //2.发消息给同步在线端
+        syncToSender(messageContent, messageContent);
+        //3.发消息给对方在线端
+        dispatchMessage(messageContent);
+
+        return sendMessageResp;
+    }
 }

@@ -6,10 +6,13 @@ import com.learn.im.common.enums.command.GroupEventCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.service.group.model.req.SendGroupMessageReq;
+import com.learn.im.service.message.model.resp.SendMessageResp;
 import com.learn.im.service.message.mq.MessageStoreService;
 import com.learn.im.service.message.service.CheckSendMessageService;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -122,4 +125,21 @@ public class GroupMessageService {
     }
 
 
+    public SendMessageResp send(SendGroupMessageReq req) {
+
+        SendMessageResp sendMessageResp = new SendMessageResp();
+        GroupChatMessageContent message = new GroupChatMessageContent();
+        BeanUtils.copyProperties(req,message);
+
+        messageStoreService.storeGroupMessage(message);
+
+        sendMessageResp.setMessageKey(message.getMessageKey());
+        sendMessageResp.setMessageTime(System.currentTimeMillis());
+        //2.发消息给同步在线端
+        syncToSender(message,message);
+        //3.发消息给对方在线端
+        dispatchMessage(message);
+
+        return sendMessageResp;
+    }
 }
