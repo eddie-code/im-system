@@ -67,7 +67,7 @@ public class LeeWebSocketServer {
                         pipeline.addLast(new WebSocketMessageEncoder());
 
                         // 自定义的 Handler
-                        pipeline.addLast(new NettyServerHandler(config.getBrokerId()));
+                        pipeline.addLast(new NettyServerHandler(config.getBrokerId(), config.getLogicUrl()));
                     }
                 });
     }

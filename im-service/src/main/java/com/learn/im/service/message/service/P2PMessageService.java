@@ -63,8 +63,8 @@ public class P2PMessageService {
         //前置校验
         //这个用户是否被禁言 是否被禁用
         //发送方和接收方是否是好友
-        ResponseVO responseVO = imServerPermissionCheck(fromId, toId, appId);
-        if (responseVO.isOk()) {
+//        ResponseVO responseVO = imServerPermissionCheck(fromId, toId, appId);
+//        if (responseVO.isOk()) {
             threadPoolExecutor.execute(() -> {
                 // 插入数据
                 messageStoreService.storeP2PMessage(messageContent);
@@ -75,11 +75,11 @@ public class P2PMessageService {
                 // 3、发送消息给对方在线端
                 dispatchMessage(messageContent);
             });
-        } else {
-            // 告诉客户端失败了
-            // ack
-            ack(messageContent, responseVO);
-        }
+//        } else {
+//            // 告诉客户端失败了
+//            // ack
+//            ack(messageContent, responseVO);
+//        }
     }
 
     /**

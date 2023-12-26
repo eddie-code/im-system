@@ -73,7 +73,7 @@ public class BootstrapConfig {
          */
         private Integer brokerId;
 
-//        private String logicUrl;
+        private String logicUrl;
 
     }
 

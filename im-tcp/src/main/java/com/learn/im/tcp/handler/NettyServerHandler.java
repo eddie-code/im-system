@@ -4,15 +4,26 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.learn.im.codec.pack.LoginPack;
+import com.learn.im.codec.pack.message.ChatMessageAck;
 import com.learn.im.codec.proto.Message;
+import com.learn.im.codec.proto.MessagePack;
+import com.learn.im.common.ResponseVO;
 import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.ImConnectStatusEnum;
+import com.learn.im.common.enums.command.GroupEventCommand;
+import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.enums.command.SystemCommand;
 import com.learn.im.common.model.UserClientDto;
 import com.learn.im.common.model.UserSession;
+import com.learn.im.common.model.message.CheckSendMessageReq;
+import com.learn.im.tcp.feign.FeignMessageService;
 import com.learn.im.tcp.publish.MqMessageProducer;
 import com.learn.im.tcp.redis.RedisManager;
 import com.learn.im.tcp.utils.SessionSocketHolder;
+import feign.Feign;
+import feign.Request;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -23,7 +34,6 @@ import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
 
 /**
  * @author lee
@@ -34,8 +44,17 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
 
     private Integer brokerId;
 
-    public NettyServerHandler(Integer brokerId) {
+    private String logicUrl;
+
+    private FeignMessageService feignMessageService;
+
+    public NettyServerHandler(Integer brokerId, String logicUrl) {
         this.brokerId = brokerId;
+        feignMessageService = Feign.builder()
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                .options(new Request.Options(1000, 3500))//设置超时时间
+                .target(FeignMessageService.class, logicUrl);
     }
 
     /**
@@ -113,6 +132,36 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
         } else if (command == SystemCommand.PING.getCommand()) { // 心跳检测
             // 设置为当前时间
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
+        }else if(command == MessageCommand.MSG_P2P.getCommand() || command == GroupEventCommand.MSG_GROUP.getCommand()) {
+
+            CheckSendMessageReq req = new CheckSendMessageReq();
+            req.setAppId(message.getMessageHeader().getAppId());
+            req.setCommand(message.getMessageHeader().getCommand());
+            JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
+            String fromId = jsonObject.getString("fromId");
+            String toId = jsonObject.getString("toId");
+            req.setToId(toId);
+            req.setFromId(fromId);
+
+            // 1. 调用校验消息发送方接口
+            ResponseVO responseVO = feignMessageService.checkSendMessage(req);
+            if (responseVO.isOk()) {
+                // 消息发给逻辑层
+                MqMessageProducer.sendMessage(message, command);
+            } else {
+                // ACK: 把失败的返回给 netty (sdk)
+                ChatMessageAck chatMessageAck = new ChatMessageAck(
+                        jsonObject.getString("messageId")
+                );
+                responseVO.setData(chatMessageAck);
+                MessagePack<ResponseVO> ack = new MessagePack<>();
+                ack.setData(responseVO);
+                ack.setCommand(MessageCommand.MSG_ACK.getCommand()); // 单聊消息ACK 1046
+                channelHandlerContext.channel().writeAndFlush(ack);
+            }
+
+            // 2. 如果成功投递到mq
+            // 3. 失败返回ack
         } else {
             // 消息发给逻辑层
             MqMessageProducer.sendMessage(message, command);

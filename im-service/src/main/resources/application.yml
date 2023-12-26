@@ -92,5 +92,5 @@ appConfig:
   deleteGroupMemberAfterCallback: true # 删除群成员之后回调
   addGroupMemberAfterCallback: true # 拉人入群之后回调
   addGroupMemberBeforeCallback: true # 拉人入群之前回调
-  sendMessageCheckFriend: false # 发送消息是否校验关系链
-  sendMessageCheckBlack: false # 发送消息是否校验黑名单
+  sendMessageCheckFriend: true # 发送消息是否校验关系链
+  sendMessageCheckBlack: true # 发送消息是否校验黑名单

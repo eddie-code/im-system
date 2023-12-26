@@ -26,4 +26,14 @@ public class MessageController {
         return ResponseVO.successResponse(p2PMessageService.send(req));
     }
 
+    /**
+     * 内部方法
+     */
+    @RequestMapping("/checkSend")
+    public ResponseVO checkSend(@RequestBody @Validated SendMessageReq req) {
+        return p2PMessageService.imServerPermissionCheck(
+                req.getFromId(), req.getToId(), req.getAppId()
+        );
+    }
+
 }
