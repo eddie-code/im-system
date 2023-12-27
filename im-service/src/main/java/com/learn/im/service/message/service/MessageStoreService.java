@@ -1,4 +1,4 @@
-package com.learn.im.service.message.mq;
+package com.learn.im.service.message.service;
 
 import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.model.GroupChatMessageContent;

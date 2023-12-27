@@ -7,7 +7,6 @@ import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.MessageContent;
 import com.learn.im.service.message.model.req.SendMessageReq;
 import com.learn.im.service.message.model.resp.SendMessageResp;
-import com.learn.im.service.message.mq.MessageStoreService;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;

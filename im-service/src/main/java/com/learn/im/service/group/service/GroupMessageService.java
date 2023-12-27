@@ -8,7 +8,7 @@ import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
 import com.learn.im.service.group.model.req.SendGroupMessageReq;
 import com.learn.im.service.message.model.resp.SendMessageResp;
-import com.learn.im.service.message.mq.MessageStoreService;
+import com.learn.im.service.message.service.MessageStoreService;
 import com.learn.im.service.message.service.CheckSendMessageService;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
