@@ -41,15 +41,9 @@ spring:
         size: 36
         checkout-timeout: 0
 
-  application:
-    name: im-core
-
 # logger 配置
 logging:
   config: classpath:logback-spring.xml
-
-server:
-  port: 8000
 
 mybatis-plus:
   configuration:
@@ -71,26 +65,3 @@ httpclient:
   connectionRequestTimeout: 2000 # 连接请求超时
   socketTimeout: 5000 # 套接字超时
   staleConnectionCheckEnabled: true
-
-appConfig:
-  privateKey: 123456
-  zkAddr: 192.168.56.101:2181 # zk连接地址
-  zkConnectTimeOut: 50000 #zk超时时间
-  imRouteWay: 1 # 路由策略1轮训 2随机 3hash
-  consistentHashWay: 1 # 如果选用一致性hash的话具体hash算法 1 TreeMap 2 自定义Map
-  callbackUrl: http://127.0.0.1:8989/callback
-  modifyUserAfterCallback: true # 用户资料变更之后回调开关
-  addFriendAfterCallback: true # 添加好友之后回调开关
-  addFriendBeforeCallback: true # 添加好友之前回调开关
-  modifyFriendAfterCallback: true # 修改好友之后回调开关
-  deleteFriendAfterCallback: true # 删除好友之后回调开关
-  addFriendShipBlackAfterCallback: true #添加黑名单之后回调开关
-  deleteFriendShipBlackAfterCallback: true #删除黑名单之后回调开关
-  createGroupAfterCallback: true # 创建群聊之后回调开关
-  modifyGroupAfterCallback: true # 修改群聊之后回调开关
-  destroyGroupAfterCallback: true # 解散群聊之后回调开关
-  deleteGroupMemberAfterCallback: true # 删除群成员之后回调
-  addGroupMemberAfterCallback: true # 拉人入群之后回调
-  addGroupMemberBeforeCallback: true # 拉人入群之前回调
-  sendMessageCheckFriend: false # 发送消息是否校验关系链
-  sendMessageCheckBlack: false # 发送消息是否校验黑名单
