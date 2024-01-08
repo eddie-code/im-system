@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.common.model.message.MessageReciveAckContent;
+import com.learn.im.service.message.service.MessageSyncService;
 import com.learn.im.service.message.service.P2PMessageService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,7 @@ import java.util.Map;
 
 /**
  * @author lee
- * @description 聊天操作消费者
+ * @description 聊天操作接收器
  */
 @Slf4j
 @Component
@@ -31,6 +33,9 @@ public class ChatOperateReceiver {
 
     @Autowired
     P2PMessageService p2PMessageService;
+
+    @Autowired
+    MessageSyncService messageSyncService;
 
     @RabbitListener(
             bindings = @QueueBinding(
@@ -54,6 +59,10 @@ public class ChatOperateReceiver {
                 // 处理消息
                 MessageContent messageContent = jsonObject.toJavaObject(MessageContent.class);
                 p2PMessageService.process(messageContent);
+            } else if (command.equals(MessageCommand.MSG_RECIVE_ACK.getCommand())) {
+                // 消息接收确认
+                MessageReciveAckContent messageContent = jsonObject.toJavaObject(MessageReciveAckContent.class);
+                messageSyncService.receiveMark(messageContent);
             }
             // 消费成功调用channel.basicAck()
             channel.basicAck(deliveryTag, false);

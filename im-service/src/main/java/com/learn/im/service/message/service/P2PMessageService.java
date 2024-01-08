@@ -1,6 +1,7 @@
 package com.learn.im.service.message.service;
 
 import com.learn.im.codec.pack.message.ChatMessageAck;
+import com.learn.im.codec.pack.message.MessageReciveServerAckPack;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.model.ClientInfo;
@@ -72,7 +73,11 @@ public class P2PMessageService {
                 // 2、发送消息给同步在线端
                 syncToSender(messageContent, messageContent);
                 // 3、发送消息给对方在线端
-                dispatchMessage(messageContent);
+                List<ClientInfo> clientInfos = dispatchMessage(messageContent);
+                if (clientInfos.isEmpty()) {
+                    // 发送接收确认给发送方，要带上是服务端发送的标识
+                    reciverAck(messageContent);
+                }
             });
 //        } else {
 //            // 告诉客户端失败了
@@ -98,6 +103,21 @@ public class P2PMessageService {
                 MessageCommand.MSG_ACK,
                 responseVO,
                 messageContent
+        );
+    }
+
+    public void reciverAck(MessageContent messageContent) {
+        MessageReciveServerAckPack pack = new MessageReciveServerAckPack();
+        pack.setFromId(messageContent.getToId());
+        pack.setToId(messageContent.getFromId());
+        pack.setMessageKey(messageContent.getMessageKey());
+        pack.setMessageSequence(messageContent.getMessageSequence());
+        pack.setServerSend(true);
+        messageProducer.sendToUser(
+                messageContent.getFromId(),
+                MessageCommand.MSG_RECIVE_ACK,
+                pack,
+                new ClientInfo(messageContent.getAppId(), messageContent.getClientType(), messageContent.getImei())
         );
     }
 

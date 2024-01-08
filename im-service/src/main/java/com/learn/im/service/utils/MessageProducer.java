@@ -73,10 +73,12 @@ public class MessageProducer {
         List<ClientInfo> list = new ArrayList<>();
         for (UserSession session : userSession) {
             boolean b = sendPack(toId, command, data, session);
+            // 发送成功
             if (b) {
                 list.add(new ClientInfo(session.getAppId(), session.getClientType(), session.getImei()));
             }
         }
+        // 若返回是空, 证明另外一端没有在线
         return list;
     }
 
