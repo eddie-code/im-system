@@ -3,11 +3,14 @@ package com.learn.im.service.message.service;
 import com.learn.im.codec.pack.message.ChatMessageAck;
 import com.learn.im.codec.pack.message.MessageReciveServerAckPack;
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.MessageContent;
 import com.learn.im.service.message.model.req.SendMessageReq;
 import com.learn.im.service.message.model.resp.SendMessageResp;
+import com.learn.im.service.seq.RedisSeq;
+import com.learn.im.service.utils.ConversationIdGenerate;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +41,9 @@ public class P2PMessageService {
     @Autowired
     MessageStoreService messageStoreService;
 
+    @Autowired
+    RedisSeq redisSeq;
+
     private final ThreadPoolExecutor threadPoolExecutor;
 
     {
@@ -66,6 +72,13 @@ public class P2PMessageService {
 //        ResponseVO responseVO = imServerPermissionCheck(fromId, toId, appId);
 //        if (responseVO.isOk()) {
             threadPoolExecutor.execute(() -> {
+
+                // 客户端可以根据这个 seq 进行排序  格式：（appId + Seq + (from + to) groupId）
+                long seq = redisSeq.doGetSeq(
+                        messageContent.getAppId() + ":" + Constants.SeqConstants.Message + ":" + ConversationIdGenerate.generateP2PId(messageContent.getFromId(), messageContent.getToId())
+                );
+                messageContent.setMessageSequence(seq);
+
                 // 插入数据
                 messageStoreService.storeP2PMessage(messageContent);
                 // 1、回ack成功给自己

@@ -41,6 +41,7 @@ public class StoreMessageService {
         fromHistory.setOwnerId(messageContent.getFromId());
         fromHistory.setMessageKey(imMessageBodyEntity.getMessageKey());
         fromHistory.setCreateTime(System.currentTimeMillis());
+        // 序列号
         fromHistory.setSequence(messageContent.getMessageSequence());
 
         ImMessageHistoryEntity toHistory = new ImMessageHistoryEntity();
@@ -48,6 +49,7 @@ public class StoreMessageService {
         toHistory.setOwnerId(messageContent.getToId());
         toHistory.setMessageKey(imMessageBodyEntity.getMessageKey());
         toHistory.setCreateTime(System.currentTimeMillis());
+        // 序列号
         toHistory.setSequence(messageContent.getMessageSequence());
 
         list.add(fromHistory);

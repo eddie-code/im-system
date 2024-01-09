@@ -11,6 +11,9 @@ public class ChatMessageAck {
 
     private String messageId;
 
+    /**
+     * 序列号
+     */
     private Long messageSequence;
 
     public ChatMessageAck(String messageId) {
