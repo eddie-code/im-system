@@ -47,7 +47,7 @@ public class P2PMessageService {
     private final ThreadPoolExecutor threadPoolExecutor;
 
     {
-        AtomicInteger num = new AtomicInteger();
+        final AtomicInteger num = new AtomicInteger(0);
         threadPoolExecutor = new ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {

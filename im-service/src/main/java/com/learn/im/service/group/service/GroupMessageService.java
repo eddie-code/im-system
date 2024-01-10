@@ -2,6 +2,7 @@ package com.learn.im.service.group.service;
 
 import com.learn.im.codec.pack.message.ChatMessageAck;
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.command.GroupEventCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.GroupChatMessageContent;
@@ -10,6 +11,7 @@ import com.learn.im.service.group.model.req.SendGroupMessageReq;
 import com.learn.im.service.message.model.resp.SendMessageResp;
 import com.learn.im.service.message.service.MessageStoreService;
 import com.learn.im.service.message.service.CheckSendMessageService;
+import com.learn.im.service.seq.RedisSeq;
 import com.learn.im.service.utils.MessageProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -17,6 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author lee
@@ -38,6 +45,23 @@ public class GroupMessageService {
     @Autowired
     MessageStoreService messageStoreService;
 
+    @Autowired
+    RedisSeq redisSeq;
+
+    private final ThreadPoolExecutor threadPoolExecutor;
+
+    {
+        final AtomicInteger num = new AtomicInteger(0);
+        threadPoolExecutor = new ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), r -> {
+            Thread thread = new Thread(r);
+            // 设置守护线程;
+            // 将一个用户线程设置为守护线程的方式是在 线程对象创建 之前 用线程对象的setDaemon方法。
+            thread.setDaemon(true);
+            thread.setName("message-group-thread-" + num.getAndIncrement());
+            return thread;
+        });
+    }
+
     public void process(GroupChatMessageContent messageContent) {
 
         String fromId = messageContent.getFromId();
@@ -46,8 +70,7 @@ public class GroupMessageService {
         //前置校验
         //这个用户是否被禁言 是否被禁用
         //发送方和接收方是否是好友
-        ResponseVO responseVO = imServerPermissionCheck(fromId, groupId, appId);
-        if (responseVO.isOk()) {
+        threadPoolExecutor.execute(() -> {
             // 插入数据
             messageStoreService.storeGroupMessage(messageContent);
             // 1、回ack成功给自己
@@ -56,11 +79,7 @@ public class GroupMessageService {
             syncToSender(messageContent, messageContent);
             // 3、发送消息给对方在线端
             dispatchMessage(messageContent);
-        } else {
-            // 告诉客户端失败了
-            // ack
-            ack(messageContent, responseVO);
-        }
+        });
     }
 
     /**

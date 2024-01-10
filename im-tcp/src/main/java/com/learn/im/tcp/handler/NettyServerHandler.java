@@ -134,38 +134,46 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
         }else if(command == MessageCommand.MSG_P2P.getCommand() || command == GroupEventCommand.MSG_GROUP.getCommand()) {
 
-            CheckSendMessageReq req = new CheckSendMessageReq();
-            req.setAppId(message.getMessageHeader().getAppId());
-            req.setCommand(message.getMessageHeader().getCommand());
-            JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
-            String fromId = jsonObject.getString("fromId");
-            String toId = jsonObject.getString("toId");
-            req.setToId(toId);
-            req.setFromId(fromId);
+            try {
+                String toId = "";
+                CheckSendMessageReq req = new CheckSendMessageReq();
+                req.setAppId(message.getMessageHeader().getAppId());
+                req.setCommand(message.getMessageHeader().getCommand());
+                JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
+                String fromId = jsonObject.getString("fromId");
+                if (command == MessageCommand.MSG_P2P.getCommand()) {
+                    toId = jsonObject.getString("toId");
+                } else {
+                    toId = jsonObject.getString("groupId");
+                }
+                req.setToId(toId);
+                req.setFromId(fromId);
 
-            // 1. 调用校验消息发送方接口
-            ResponseVO responseVO = feignMessageService.checkSendMessage(req);
-            if (responseVO.isOk()) {
-                // 消息发给逻辑层
-                MqMessageProducer.sendMessage(message, command);
-            } else {
-                // ACK: 把失败的返回给 netty (sdk)
-                ChatMessageAck chatMessageAck = new ChatMessageAck(
-                        jsonObject.getString("messageId")
-                );
-                responseVO.setData(chatMessageAck);
-                MessagePack<ResponseVO> ack = new MessagePack<>();
-                ack.setData(responseVO);
-                ack.setCommand(MessageCommand.MSG_ACK.getCommand()); // 单聊消息ACK 1046
-                channelHandlerContext.channel().writeAndFlush(ack);
+                ResponseVO responseVO = feignMessageService.checkSendMessage(req);
+                if (responseVO.isOk()) {
+                    MqMessageProducer.sendMessage(message, command);
+                } else {
+                    Integer ackCommand = 0;
+                    if (command == MessageCommand.MSG_P2P.getCommand()) {
+                        ackCommand = MessageCommand.MSG_ACK.getCommand();
+                    } else {
+                        ackCommand = GroupEventCommand.GROUP_MSG_ACK.getCommand();
+                    }
+
+                    ChatMessageAck chatMessageAck = new ChatMessageAck(jsonObject.getString("messageId"));
+                    responseVO.setData(chatMessageAck);
+                    MessagePack<ResponseVO> ack = new MessagePack<>();
+                    ack.setData(responseVO);
+                    ack.setCommand(ackCommand);
+                    channelHandlerContext.channel().writeAndFlush(ack);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            // 2. 如果成功投递到mq
-            // 3. 失败返回ack
-        } else {
-            // 消息发给逻辑层
-            MqMessageProducer.sendMessage(message, command);
+        }else {
+            MqMessageProducer.sendMessage(message,command);
         }
+
     }
 
     //表示 channel 处于不活动状态

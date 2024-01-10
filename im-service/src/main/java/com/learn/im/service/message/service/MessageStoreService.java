@@ -5,6 +5,7 @@ import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.common.model.message.DoStoreGroupMessageDto;
 import com.learn.im.common.model.message.DoStoreP2PMessageDto;
 import com.learn.im.common.model.message.ImMessageBody;
 import com.learn.im.service.group.dao.ImGroupMessageHistoryEntity;
@@ -133,6 +134,14 @@ public class MessageStoreService {
 //        imGroupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
 //        // MessageKey 返回给调用者
 //        messageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
+
+        ImMessageBody imMessageBody = extractMessageBody(messageContent);
+        DoStoreGroupMessageDto dto = new DoStoreGroupMessageDto();
+        dto.setMessageBody(imMessageBody);
+        dto.setGroupChatMessageContent(messageContent);
+        rabbitTemplate.convertAndSend(Constants.RabbitConstants.StoreGroupMessage, "", JSONObject.toJSONString(dto));
+        messageContent.setMessageKey(imMessageBody.getMessageKey());
+
     }
 
     private ImGroupMessageHistoryEntity extractToGroupMessageHistory(GroupChatMessageContent messageContent , ImMessageBodyEntity messageBodyEntity){
