@@ -67,6 +67,12 @@ public class GroupMessageService {
         String fromId = messageContent.getFromId();
         String groupId = messageContent.getGroupId(); // 单聊=toId  群里=groupId
         Integer appId = messageContent.getAppId();
+
+
+        // 群聊消息有序性： seq 进行排序 格式：（appId + Seq + groupId）
+        long seq = redisSeq.doGetSeq(messageContent.getAppId() + ":" + Constants.SeqConstants.GroupMessage + messageContent.getGroupId());
+        messageContent.setMessageSequence(seq);
+
         //前置校验
         //这个用户是否被禁言 是否被禁用
         //发送方和接收方是否是好友
