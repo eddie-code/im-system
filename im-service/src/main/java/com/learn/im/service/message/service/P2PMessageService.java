@@ -66,19 +66,37 @@ public class P2PMessageService {
         String fromId = messageContent.getFromId();
         String toId = messageContent.getToId();
         Integer appId = messageContent.getAppId();
+
+        // 用 messageId 从缓存中获取消息
+        MessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId());
+        if (messageFromMessageIdCache != null) {
+            threadPoolExecutor.execute(() -> {
+                // 1、回ack成功给自己
+                ack(messageContent, ResponseVO.successResponse());
+                // 2、发送消息给同步在线端
+                syncToSender(messageFromMessageIdCache, messageFromMessageIdCache);
+                // 3、发送消息给对方在线端
+                List<ClientInfo> clientInfos = dispatchMessage(messageFromMessageIdCache);
+                if (clientInfos.isEmpty()) {
+                    // 发送接收确认给发送方，要带上是服务端发送的标识
+                    reciverAck(messageFromMessageIdCache);
+                }
+            });
+            return;
+        }
+
+        // 客户端可以根据这个 seq 进行排序  格式：（appId + Seq + (from + to) groupId）
+        long seq = redisSeq.doGetSeq(
+                messageContent.getAppId() + ":" + Constants.SeqConstants.Message + ":" + ConversationIdGenerate.generateP2PId(messageContent.getFromId(), messageContent.getToId())
+        );
+        messageContent.setMessageSequence(seq);
+
         //前置校验
         //这个用户是否被禁言 是否被禁用
         //发送方和接收方是否是好友
 //        ResponseVO responseVO = imServerPermissionCheck(fromId, toId, appId);
 //        if (responseVO.isOk()) {
             threadPoolExecutor.execute(() -> {
-
-                // 客户端可以根据这个 seq 进行排序  格式：（appId + Seq + (from + to) groupId）
-                long seq = redisSeq.doGetSeq(
-                        messageContent.getAppId() + ":" + Constants.SeqConstants.Message + ":" + ConversationIdGenerate.generateP2PId(messageContent.getFromId(), messageContent.getToId())
-                );
-                messageContent.setMessageSequence(seq);
-
                 // 插入数据
                 messageStoreService.storeP2PMessage(messageContent);
                 // 1、回ack成功给自己
@@ -87,6 +105,11 @@ public class P2PMessageService {
                 syncToSender(messageContent, messageContent);
                 // 3、发送消息给对方在线端
                 List<ClientInfo> clientInfos = dispatchMessage(messageContent);
+
+
+                // 将 messageId 存入缓存中
+                messageStoreService.setMessageFromMessageIdCache(messageContent);
+
                 if (clientInfos.isEmpty()) {
                     // 发送接收确认给发送方，要带上是服务端发送的标识
                     reciverAck(messageContent);

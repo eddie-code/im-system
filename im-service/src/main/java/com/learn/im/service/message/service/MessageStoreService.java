@@ -15,14 +15,17 @@ import com.learn.im.service.message.dao.mapper.ImMessageBodyMapper;
 import com.learn.im.service.message.dao.mapper.ImMessageHistoryMapper;
 import com.learn.im.service.utils.SnowflakeIdWorker;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author lee
@@ -46,6 +49,9 @@ public class MessageStoreService {
 
     @Autowired
     RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
 
     @Transactional
     public void storeP2PMessage(MessageContent messageContent) {
@@ -136,6 +142,35 @@ public class MessageStoreService {
         result.setMessageKey(messageBodyEntity.getMessageKey());
         result.setCreateTime(System.currentTimeMillis());
         return result;
+    }
+
+    /**
+     * 设置来自消息Id缓存的消息
+     */
+    public void setMessageFromMessageIdCache(MessageContent messageContent) {
+        //appid : cache : messageId
+        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.cacheMessage + ":" + messageContent.getMessageId();
+        stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
+    }
+
+//    public <T> T getMessageFromMessageIdCache(Integer appId, String messageId,Class<T> clazz){
+//        //appid : cache : messageId
+//        String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
+//        String msg = stringRedisTemplate.opsForValue().get(key);
+//        if(StringUtils.isBlank(msg)){
+//            return null;
+//        }
+//        return JSONObject.parseObject(msg, clazz);
+//    }
+
+    public MessageContent getMessageFromMessageIdCache(Integer appId, String messageId) {
+        //appid : cache : messageId
+        String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
+        String msg = stringRedisTemplate.opsForValue().get(key);
+        if (StringUtils.isBlank(msg)) {
+            return null;
+        }
+        return JSONObject.parseObject(msg, MessageContent.class);
     }
 
 }
