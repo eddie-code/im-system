@@ -68,6 +68,17 @@ public class GroupMessageService {
         String groupId = messageContent.getGroupId(); // 单聊=toId  群里=groupId
         Integer appId = messageContent.getAppId();
 
+        GroupChatMessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), GroupChatMessageContent.class);
+        if (messageFromMessageIdCache != null) {
+            threadPoolExecutor.execute(() -> {
+                // 1、回ack成功给自己
+                ack(messageContent, ResponseVO.successResponse());
+                // 2、发送消息给同步在线端
+                syncToSender(messageContent, messageContent);
+                // 3、发送消息给对方在线端
+                dispatchMessage(messageContent);
+            });
+        }
 
         // 群聊消息有序性： seq 进行排序 格式：（appId + Seq + groupId）
         long seq = redisSeq.doGetSeq(messageContent.getAppId() + ":" + Constants.SeqConstants.GroupMessage + messageContent.getGroupId());
@@ -85,6 +96,10 @@ public class GroupMessageService {
             syncToSender(messageContent, messageContent);
             // 3、发送消息给对方在线端
             dispatchMessage(messageContent);
+
+            // 将 messageId 存入缓存中
+            messageStoreService.setMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), messageContent);
+
         });
     }
 
@@ -102,7 +117,7 @@ public class GroupMessageService {
         // 发消息
         messageProducer.sendToUser(
                 messageContent.getFromId(),
-                GroupEventCommand.MSG_GROUP,
+                GroupEventCommand.GROUP_MSG_ACK,
                 responseVO,
                 messageContent
         );

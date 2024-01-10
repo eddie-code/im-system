@@ -68,7 +68,7 @@ public class P2PMessageService {
         Integer appId = messageContent.getAppId();
 
         // 用 messageId 从缓存中获取消息
-        MessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId());
+        MessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), MessageContent.class);
         if (messageFromMessageIdCache != null) {
             threadPoolExecutor.execute(() -> {
                 // 1、回ack成功给自己
@@ -106,9 +106,8 @@ public class P2PMessageService {
                 // 3、发送消息给对方在线端
                 List<ClientInfo> clientInfos = dispatchMessage(messageContent);
 
-
                 // 将 messageId 存入缓存中
-                messageStoreService.setMessageFromMessageIdCache(messageContent);
+                messageStoreService.setMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), messageContent);
 
                 if (clientInfos.isEmpty()) {
                     // 发送接收确认给发送方，要带上是服务端发送的标识

@@ -156,30 +156,36 @@ public class MessageStoreService {
     /**
      * 设置来自消息Id缓存的消息
      */
-    public void setMessageFromMessageIdCache(MessageContent messageContent) {
-        //appid : cache : messageId
-        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.cacheMessage + ":" + messageContent.getMessageId();
-        stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
-    }
+//    public void setMessageFromMessageIdCache(MessageContent messageContent) {
+//        //appid : cache : messageId
+//        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.cacheMessage + ":" + messageContent.getMessageId();
+//        stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
+//    }
 
-//    public <T> T getMessageFromMessageIdCache(Integer appId, String messageId,Class<T> clazz){
+//    public MessageContent getMessageFromMessageIdCache(Integer appId, String messageId) {
 //        //appid : cache : messageId
 //        String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
 //        String msg = stringRedisTemplate.opsForValue().get(key);
-//        if(StringUtils.isBlank(msg)){
+//        if (StringUtils.isBlank(msg)) {
 //            return null;
 //        }
-//        return JSONObject.parseObject(msg, clazz);
+//        return JSONObject.parseObject(msg, MessageContent.class);
 //    }
 
-    public MessageContent getMessageFromMessageIdCache(Integer appId, String messageId) {
+    public void setMessageFromMessageIdCache(Integer appId,String messageId,Object messageContent) {
+        //appid : cache : messageId
+        String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
+        stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
+    }
+
+    public <T> T getMessageFromMessageIdCache(Integer appId, String messageId, Class<T> clazz) {
         //appid : cache : messageId
         String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
         String msg = stringRedisTemplate.opsForValue().get(key);
         if (StringUtils.isBlank(msg)) {
             return null;
         }
-        return JSONObject.parseObject(msg, MessageContent.class);
+        return JSONObject.parseObject(msg, clazz);
     }
 
 }
