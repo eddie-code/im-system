@@ -486,7 +486,7 @@
                     }
                     var readData = JSON.stringify(readedData);
                     let readBodyLen = readData.length;
-                    messageReader.int32(1106)
+                        messageReader.int32(1106)
                         .int32(version).int32(clientType)
                         .int32(messageType).int32(appId)
                         .int32(imeiLen).int32(readBodyLen).vstring(imei,imeiLen)
