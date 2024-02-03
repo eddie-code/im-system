@@ -21,6 +21,11 @@ public class MessageReadedContent extends ClientInfo {
     private String fromId;
 
     /**
+     * 群ID
+     */
+    private String groupId;
+
+    /**
      * 发送给谁
      */
     private String toId;
