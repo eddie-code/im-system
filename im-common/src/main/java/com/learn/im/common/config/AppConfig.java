@@ -79,4 +79,6 @@ public class AppConfig {
 
     private boolean addGroupMemberAfterCallback;//拉人入群之后回调
 
+    private Integer deleteConversationSyncMode;//1=多端同步
+
 }
