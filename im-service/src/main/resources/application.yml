@@ -95,3 +95,4 @@ appConfig:
   sendMessageCheckFriend: false # 发送消息是否校验关系链
   sendMessageCheckBlack: false # 发送消息是否校验黑名单
   deleteConversationSyncMode: 1 # 1=多端同步
+  offlineMessageCount: 1000 # 离线消息最大条数

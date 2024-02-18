@@ -4,9 +4,11 @@ import com.learn.im.codec.pack.message.ChatMessageAck;
 import com.learn.im.codec.pack.message.MessageReciveServerAckPack;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.constant.Constants;
+import com.learn.im.common.enums.ConversationTypeEnum;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.common.model.message.OfflineMessageContent;
 import com.learn.im.service.message.model.req.SendMessageReq;
 import com.learn.im.service.message.model.resp.SendMessageResp;
 import com.learn.im.service.seq.RedisSeq;
@@ -99,6 +101,13 @@ public class P2PMessageService {
             threadPoolExecutor.execute(() -> {
                 // 插入数据
                 messageStoreService.storeP2PMessage(messageContent);
+
+                // TODO 插入离线消息
+                OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
+                BeanUtils.copyProperties(messageContent,offlineMessageContent);
+                offlineMessageContent.setConversationType(ConversationTypeEnum.P2P.getCode());
+                messageStoreService.storeOfflineMessage(offlineMessageContent);
+
                 // 1、回ack成功给自己
                 ack(messageContent, ResponseVO.successResponse());
                 // 2、发送消息给同步在线端

@@ -1,13 +1,17 @@
 package com.learn.im.service.message.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.learn.im.common.config.AppConfig;
 import com.learn.im.common.constant.Constants;
+import com.learn.im.common.enums.ConversationTypeEnum;
 import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
 import com.learn.im.common.model.message.DoStoreGroupMessageDto;
 import com.learn.im.common.model.message.DoStoreP2PMessageDto;
 import com.learn.im.common.model.message.ImMessageBody;
+import com.learn.im.common.model.message.OfflineMessageContent;
+import com.learn.im.service.conversation.service.ConversationService;
 import com.learn.im.service.group.dao.ImGroupMessageHistoryEntity;
 import com.learn.im.service.group.dao.mapper.ImGroupMessageHistoryMapper;
 import com.learn.im.service.message.dao.ImMessageBodyEntity;
@@ -21,6 +25,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +58,12 @@ public class MessageStoreService {
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    AppConfig appConfig;
+
+    @Autowired
+    ConversationService conversationService;
 
     @Transactional
     public void storeP2PMessage(MessageContent messageContent) {
@@ -186,6 +197,88 @@ public class MessageStoreService {
             return null;
         }
         return JSONObject.parseObject(msg, clazz);
+    }
+
+
+    /**
+     * 存储单人离线消息
+     *
+     * @param offlineMessage
+     */
+    public void storeOfflineMessage(OfflineMessageContent offlineMessage) {
+
+        // 找到fromId的队列
+        String fromKey = offlineMessage.getAppId() + ":" + Constants.RedisConstants.OfflineMessage + ":" + offlineMessage.getFromId();
+        // 找到toId的队列
+        String toKey = offlineMessage.getAppId() + ":" + Constants.RedisConstants.OfflineMessage + ":" + offlineMessage.getToId();
+
+        // 使用zSet原因：需要分页+有序
+        ZSetOperations<String, String> operations = stringRedisTemplate.opsForZSet();
+        //判断 队列中的数据是否超过设定值
+        if (operations.zCard(fromKey) > appConfig.getOfflineMessageCount()) {
+            // 删除第一个元素
+            operations.removeRange(fromKey, 0, 0);
+        }
+        offlineMessage.setConversationId(conversationService.convertConversationId(
+                ConversationTypeEnum.P2P.getCode(),offlineMessage.getFromId(),offlineMessage.getToId()
+        ));
+        // 插入数据到Redis.ZSET里面 根据messageKey 作为分值
+        operations.add(
+                fromKey,
+                JSONObject.toJSONString(offlineMessage),
+                offlineMessage.getMessageKey()
+        );
+        //判断 队列中的数据是否超过设定值
+        if (operations.zCard(toKey) > appConfig.getOfflineMessageCount()) {
+            // 删除第一个元素
+            operations.removeRange(toKey, 0, 0);
+        }
+        offlineMessage.setConversationId(conversationService.convertConversationId(
+                ConversationTypeEnum.P2P.getCode(),offlineMessage.getToId(),offlineMessage.getFromId()
+        ));
+        // 插入数据到Redis.ZSET里面 根据messageKey 作为分值
+        operations.add(
+                toKey,
+                JSONObject.toJSONString(offlineMessage),
+                offlineMessage.getMessageKey()
+        );
+
+    }
+
+
+    /**
+     * 存储群组离线消息
+     *
+     * @param offlineMessage
+     */
+    public void storeGroupOfflineMessage(OfflineMessageContent offlineMessage, List<String> memberIds) {
+
+        // 使用zSet原因：需要分页+有序
+        ZSetOperations<String, String> operations = stringRedisTemplate.opsForZSet();
+        //判断 队列中的数据是否超过设定值
+        offlineMessage.setConversationType(ConversationTypeEnum.GROUP.getCode());
+
+        for (String memberId : memberIds) {
+            // 找到toId的队列
+            String toKey = offlineMessage.getAppId() + ":" +
+                    Constants.RedisConstants.OfflineMessage + ":" +
+                    memberId;
+
+            offlineMessage.setConversationId(conversationService.convertConversationId(
+                    ConversationTypeEnum.GROUP.getCode(),
+                    memberId,
+                    offlineMessage.getToId()
+            ));
+            if (operations.zCard(toKey) > appConfig.getOfflineMessageCount()) {
+                operations.removeRange(toKey, 0, 0);
+            }
+            // 插入 数据 根据messageKey 作为分值
+            operations.add(
+                    toKey,
+                    JSONObject.toJSONString(offlineMessage),
+                    offlineMessage.getMessageKey()
+            );
+        }
     }
 
 }

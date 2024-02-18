@@ -81,4 +81,6 @@ public class AppConfig {
 
     private Integer deleteConversationSyncMode;//1=多端同步
 
+    private Integer offlineMessageCount;//离线消息最大条数
+
 }

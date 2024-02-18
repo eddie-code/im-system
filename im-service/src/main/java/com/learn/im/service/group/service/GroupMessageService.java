@@ -7,6 +7,7 @@ import com.learn.im.common.enums.command.GroupEventCommand;
 import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.GroupChatMessageContent;
 import com.learn.im.common.model.MessageContent;
+import com.learn.im.common.model.message.OfflineMessageContent;
 import com.learn.im.service.group.model.req.SendGroupMessageReq;
 import com.learn.im.service.message.model.resp.SendMessageResp;
 import com.learn.im.service.message.service.MessageStoreService;
@@ -90,6 +91,18 @@ public class GroupMessageService {
         threadPoolExecutor.execute(() -> {
             // 插入数据
             messageStoreService.storeGroupMessage(messageContent);
+
+            // 离线消息存储
+            List<String> groupMemberId = imGroupMemberService.getGroupMemberId(
+                    messageContent.getGroupId(),
+                    messageContent.getAppId()
+            );
+            messageContent.setMemberId(groupMemberId);
+            OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
+            BeanUtils.copyProperties(messageContent,offlineMessageContent);
+            offlineMessageContent.setToId(messageContent.getGroupId());
+            messageStoreService.storeGroupOfflineMessage(offlineMessageContent,groupMemberId);
+
             // 1、回ack成功给自己
             ack(messageContent, ResponseVO.successResponse());
             // 2、发送消息给同步在线端
@@ -139,12 +152,7 @@ public class GroupMessageService {
      * 发送消息给对方在线端
      */
     private void dispatchMessage(GroupChatMessageContent messageContent) {
-        // sql :: and role != 3
-        List<String> groupMemberId = imGroupMemberService.getGroupMemberId(
-                messageContent.getGroupId(),
-                messageContent.getAppId()
-        );
-        for (String memberId : groupMemberId) {
+        for (String memberId : messageContent.getMemberId()) {
             // 判断这个成员不能是我们的发送方， 在 process方法里面第二点已经发送过了
             if (!memberId.equals(messageContent.getFromId())) {
                 messageProducer.sendToUser(
