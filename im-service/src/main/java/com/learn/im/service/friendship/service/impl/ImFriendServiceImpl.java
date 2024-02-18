@@ -7,6 +7,7 @@ import com.learn.im.codec.pack.friendship.*;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.config.AppConfig;
 import com.learn.im.common.constant.Constants;
+import com.learn.im.common.enums.AllowFriendTypeEnum;
 import com.learn.im.common.enums.CheckFriendShipTypeEnum;
 import com.learn.im.common.enums.FriendShipErrorCode;
 import com.learn.im.common.enums.FriendShipStatusEnum;
@@ -22,6 +23,7 @@ import com.learn.im.service.friendship.model.req.*;
 import com.learn.im.service.friendship.model.resp.CheckFriendShipResp;
 import com.learn.im.service.friendship.model.resp.ImportFriendShipResp;
 import com.learn.im.service.friendship.service.ImFriendService;
+import com.learn.im.service.friendship.service.ImFriendShipRequestService;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.service.ImUserService;
 import com.learn.im.service.utils.CallbackService;
@@ -62,6 +64,9 @@ public class ImFriendServiceImpl implements ImFriendService {
 
     @Autowired
     private MessageProducer messageProducer;
+
+    @Autowired
+    ImFriendShipRequestService imFriendShipRequestService;
 
     @Override
     public ResponseVO importFriendShip(ImporFriendShipReq req) {
@@ -124,7 +129,32 @@ public class ImFriendServiceImpl implements ImFriendService {
             }
         }
 
-        return this.doAddFriend(req, req.getFromId(), req.getToItem(), req.getAppId());
+        ImUserDataEntity data = toInfo.getData();
+
+        // 判断是否好有，如是就不需要在发送添加申请
+        if (data.getFriendAllowType() != null && data.getFriendAllowType() == AllowFriendTypeEnum.NOT_NEED.getCode()) {
+            return this.doAddFriend(req, req.getFromId(), req.getToItem(), req.getAppId());
+        } else {
+            QueryWrapper<ImFriendShipEntity> query = new QueryWrapper<>();
+            query.eq("app_id", req.getAppId());
+            query.eq("from_id", req.getFromId());
+            query.eq("to_id", req.getToItem().getToId());
+            ImFriendShipEntity fromItem = imFriendShipMapper.selectOne(query);
+            // 是否好有结果集不能等于空 || 结果集的状态 不等于 好友状态=正常
+            if (fromItem == null || fromItem.getStatus() != FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode()) {
+                //插入一条好友申请的数据
+                ResponseVO responseVO = imFriendShipRequestService.addFienshipRequest(req.getFromId(), req.getToItem(), req.getAppId());
+                if (!responseVO.isOk()) {
+                    return responseVO;
+                }
+            } else {
+                // 否则提示已经是好友
+                return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_YOUR_FRIEND);
+            }
+
+        }
+
+        return ResponseVO.successResponse();
     }
 
     @Override
@@ -270,6 +300,13 @@ public class ImFriendServiceImpl implements ImFriendService {
                 toItem.setCreateTime(System.currentTimeMillis());
                 toItem.setBlack(FriendShipStatusEnum.BLACK_STATUS_NORMAL.getCode());
                 int insert = imFriendShipMapper.insert(toItem);
+            } else {
+                // 如果状态不等于正常, 才去更新
+                if (FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode() != toItem.getStatus()) {
+                    ImFriendShipEntity update = new ImFriendShipEntity();
+                    update.setStatus(FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
+                    imFriendShipMapper.update(update, toQuery);
+                }
             }
 
             //发送给from
