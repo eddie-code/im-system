@@ -36,7 +36,7 @@ public class ImFriendShipEntity {
     private Long friendSequence;
 
     /** 黑名单关系序列号*/
-    private Long blackSequence;
+//    private Long blackSequence;
     /** 好友来源*/
 //    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String addSource;
