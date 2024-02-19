@@ -13,10 +13,11 @@ import com.learn.im.service.friendship.model.req.AddFriendShipGroupMemberReq;
 import com.learn.im.service.friendship.model.req.DeleteFriendShipGroupMemberReq;
 import com.learn.im.service.friendship.service.ImFriendShipGroupMemberService;
 import com.learn.im.service.friendship.service.ImFriendShipGroupService;
+import com.learn.im.service.seq.RedisSeq;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.service.ImUserService;
 import com.learn.im.service.utils.MessageProducer;
-import lombok.RequiredArgsConstructor;
+import com.learn.im.service.utils.WriteUserSeq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -69,10 +70,12 @@ public class ImFriendShipGroupMemberServiceImpl implements ImFriendShipGroupMemb
             }
         }
 
+        Long seq = imFriendShipGroupService.updateSeq(req.getFromId(), req.getGroupName(), req.getAppId());
         AddFriendGroupMemberPack pack = new AddFriendGroupMemberPack();
         pack.setFromId(req.getFromId());
         pack.setGroupName(req.getGroupName());
         pack.setToIds(successId);
+        pack.setSequence(seq);
         messageProducer.sendToUserExceptClient(
                 req.getFromId(),
                 FriendshipEventCommand.FRIEND_GROUP_MEMBER_ADD,
@@ -102,10 +105,12 @@ public class ImFriendShipGroupMemberServiceImpl implements ImFriendShipGroupMemb
             }
         }
 
+        Long seq = imFriendShipGroupService.updateSeq(req.getFromId(), req.getGroupName(), req.getAppId());
         DeleteFriendGroupMemberPack pack = new DeleteFriendGroupMemberPack();
         pack.setFromId(req.getFromId());
         pack.setGroupName(req.getGroupName());
         pack.setToIds(successId);
+        pack.setSequence(seq);
         messageProducer.sendToUserExceptClient(
                 req.getFromId(),
                 FriendshipEventCommand.FRIEND_GROUP_MEMBER_DELETE,
