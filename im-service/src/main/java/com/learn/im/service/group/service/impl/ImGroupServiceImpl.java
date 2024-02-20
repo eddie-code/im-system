@@ -26,6 +26,7 @@ import com.learn.im.service.group.model.resp.GetJoinedGroupResp;
 import com.learn.im.service.group.model.resp.GetRoleInGroupResp;
 import com.learn.im.service.group.service.ImGroupMemberService;
 import com.learn.im.service.group.service.ImGroupService;
+import com.learn.im.service.seq.RedisSeq;
 import com.learn.im.service.utils.CallbackService;
 import com.learn.im.service.utils.GroupMessageProducer;
 import org.apache.commons.lang3.StringUtils;
@@ -62,8 +63,11 @@ public class ImGroupServiceImpl implements ImGroupService {
     @Autowired
     GroupMessageProducer groupMessageProducer;
 
+    @Autowired
+    RedisSeq redisSeq;
+
     @Override
-    public ResponseVO importGroup(ImportGroupReq req) {
+    public ResponseVO  importGroup(ImportGroupReq req) {
 
         //1.判断群id是否存在
         QueryWrapper<ImGroupEntity> query = new QueryWrapper<>();
@@ -128,6 +132,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         ImGroupEntity imGroupEntity = new ImGroupEntity();
+        long seq = redisSeq.doGetSeq(req.getAppId() + ":" + Constants.SeqConstants.Group);
+        imGroupEntity.setSequence(seq);
         imGroupEntity.setCreateTime(System.currentTimeMillis());
         imGroupEntity.setStatus(GroupStatusEnum.NORMAL.getCode());
         BeanUtils.copyProperties(req, imGroupEntity);
@@ -212,8 +218,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         ImGroupEntity update = new ImGroupEntity();
+        long seq = redisSeq.doGetSeq(req.getAppId() + ":" + Constants.SeqConstants.Group);
         BeanUtils.copyProperties(req, update);
         update.setUpdateTime(System.currentTimeMillis());
+        update.setSequence(seq);
         int row = imGroupDataMapper.update(update, query);
         if (row != 1) {
             throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
@@ -316,8 +324,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         ImGroupEntity update = new ImGroupEntity();
+        long seq = redisSeq.doGetSeq(req.getAppId() + ":" + Constants.SeqConstants.Group);
 
         update.setStatus(GroupStatusEnum.DESTROY.getCode());
+        update.setSequence(seq);
         int update1 = imGroupDataMapper.update(update, objectQueryWrapper);
         if (update1 != 1) {
             throw new ApplicationException(GroupErrorCode.UPDATE_GROUP_BASE_INFO_ERROR);
