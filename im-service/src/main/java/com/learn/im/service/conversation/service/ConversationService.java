@@ -181,10 +181,11 @@ public class ConversationService {
         //seq > req.getseq limit maxLimit
         QueryWrapper<ImConversationSetEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("from_id", req.getOperater());
-        queryWrapper.gt("sequence", req.getLastSequence());
+        queryWrapper.gt("sequence", req.getLastSequence());  // gt = 大于  (传入的 lastSequence数)
         queryWrapper.eq("app_id", req.getAppId());
         queryWrapper.last(" limit " + req.getMaxLimit());
-        queryWrapper.orderByAsc("sequence");
+        queryWrapper.orderByAsc("sequence"); // 升序
+        // SQL： SELECT conversation_id, conversation_type, from_id, to_id, is_mute, is_top, sequence, readed_sequence, app_id FROM im_conversation_set WHERE(from_id = 'lld' AND sequence > 0 AND app_id = 10000) ORDER BY sequence ASC limit 100;
         List<ImConversationSetEntity> list = imConversationSetMapper.selectList(queryWrapper);
 
         if (!CollectionUtils.isEmpty(list)) {
@@ -192,6 +193,7 @@ public class ConversationService {
             ImConversationSetEntity maxSeqEntity = list.get(list.size() - 1);
             resp.setDataList(list);
             // 设置最大seq
+            // SQL: select max(sequence) from im_conversation_set where app_id = 10000 AND from_id = 'lld';
             Long friendShipMaxSeq = imConversationSetMapper.geConversationSetMaxSeq(req.getAppId(), req.getOperater());
             resp.setMaxSequence(friendShipMaxSeq);
             // 设置是否拉取完毕

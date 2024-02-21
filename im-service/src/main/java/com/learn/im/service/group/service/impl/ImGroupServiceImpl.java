@@ -490,10 +490,10 @@ public class ImGroupServiceImpl implements ImGroupService {
             QueryWrapper<ImGroupEntity> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("app_id", req.getAppId());
             queryWrapper.in("group_id", data);
-            queryWrapper.gt("sequence", req.getLastSequence());
+            queryWrapper.gt("sequence", req.getLastSequence()); // gt = 大于  (传入的 lastSequence数)
             queryWrapper.last(" limit " + req.getMaxLimit());
-            queryWrapper.orderByAsc("sequence");
-
+            queryWrapper.orderByAsc("sequence"); // 升序
+            // SQL: SELECT group_id, app_id, owner_id, group_type, group_name, mute, apply_join_type, introduction, notification, photo, max_member_count, status, sequence, create_time, update_time, extra FROM im_group WHERE(app_id = 10000AND group_id IN ('123123','test1','test2')AND sequence > 4) ORDER BY sequence ASC limit 100;
             List<ImGroupEntity> list = imGroupDataMapper.selectList(queryWrapper);
 
             if (!CollectionUtils.isEmpty(list)) {
@@ -510,6 +510,20 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
         resp.setCompleted(true);
         return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public Long getUserGroupMaxSeq(String userId, Integer appId) {
+        // 查询我们加入的群聊 （排除离开状态的）
+        // SQL: select group_id from im_group_member where app_id = 10000 AND member_id = 'lld' and role != 3;
+        ResponseVO<Collection<String>> memberJoinedGroup = groupMemberService.syncMemberJoinedGroup(userId, appId);
+        if (!memberJoinedGroup.isOk()) {
+            throw new ApplicationException(500, "");
+        }
+        // memberJoinedGroup.getData() 的集合数据都是 groupId
+        // SQL: SELECT max( sequence ) FROM im_group WHERE app_id = 10000 AND group_id IN ( '123123', 'test1', 'test2' );
+        Long maxSeq = imGroupDataMapper.getGroupMaxSeq(memberJoinedGroup.getData(), appId);
+        return maxSeq;
     }
 
 

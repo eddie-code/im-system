@@ -70,4 +70,14 @@ public class ImUserController {
         return ResponseVO.errorResponse();
     }
 
+    /**
+     * 客户端在登录的时候， 调用此接口， 判断本地的 Seq 和服务端的 Seq 是否一致。
+     * 如果一致的话， 那么就不需要进行数据同步， 如果不一致则调用相应的接口， 进行数据同步
+     */
+    @RequestMapping("/getUserSequence")
+    public ResponseVO getUserSequence(@RequestBody @Validated GetUserSequenceReq req, Integer appId) {
+        req.setAppId(appId);
+        return imUserService.getUserSequence(req);
+    }
+
 }

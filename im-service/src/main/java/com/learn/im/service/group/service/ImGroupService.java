@@ -37,4 +37,6 @@ public interface ImGroupService {
     public ResponseVO muteGroup(MuteGroupReq req);
 
     ResponseVO syncJoinedGroupList(SyncReq req);
+
+    Long getUserGroupMaxSeq(String userId, Integer appId);
 }

@@ -545,10 +545,11 @@ public class ImFriendServiceImpl implements ImFriendService {
         //seq > req.getseq limit maxLimit
         QueryWrapper<ImFriendShipEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("from_id", req.getOperater());
-        queryWrapper.gt("friend_sequence", req.getLastSequence());  // gt = 大于
+        queryWrapper.gt("friend_sequence", req.getLastSequence());  // gt = 大于  (传入的 lastSequence数)
         queryWrapper.eq("app_id", req.getAppId());
         queryWrapper.last(" limit " + req.getMaxLimit());
         queryWrapper.orderByAsc("friend_sequence"); // 升序
+        // SQL: SELECT app_id, from_id, to_id, remark, status, black, create_time, friend_sequence, add_source, extra FROM im_friendship WHERE(from_id = 'lld' AND friend_sequence > 0 AND app_id = 10000) ORDER BY friend_sequence ASC limit 100;
         List<ImFriendShipEntity> list = imFriendShipMapper.selectList(queryWrapper);
 
         if (!CollectionUtils.isEmpty(list)) {

@@ -10,6 +10,7 @@ import com.learn.im.common.enums.DelFlagEnum;
 import com.learn.im.common.enums.UserErrorCode;
 import com.learn.im.common.enums.command.UserEventCommand;
 import com.learn.im.common.exception.ApplicationException;
+import com.learn.im.service.group.service.ImGroupService;
 import com.learn.im.service.user.dao.ImUserDataEntity;
 import com.learn.im.service.user.dao.mapper.ImUserDataMapper;
 import com.learn.im.service.user.model.req.*;
@@ -46,6 +47,12 @@ public class ImUserviceImpl implements ImUserService {
     private final CallbackService callbackService;
 
     private final MessageProducer messageProducer;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    ImGroupService imGroupService;
 
     @Override
     public ResponseVO importUser(ImportUserReq req) {
@@ -203,5 +210,17 @@ public class ImUserviceImpl implements ImUserService {
     public ResponseVO login(LoginReq req) {
         return ResponseVO.successResponse();
     }
+
+    @Override
+    public ResponseVO getUserSequence(GetUserSequenceReq req) {
+        // 从redis获取
+        String key = req.getAppId() + ":" + Constants.RedisConstants.SeqPrefix + ":" + req.getUserId();
+        Map<Object, Object> map = stringRedisTemplate.opsForHash().entries(key);
+        // 从数据库查询群组最大Seq, 加入到Map里面
+        Long groupSeq = imGroupService.getUserGroupMaxSeq(req.getUserId(), req.getAppId());
+        map.put(Constants.SeqConstants.Group, groupSeq);
+        return ResponseVO.successResponse(map);
+    }
+
 
 }
