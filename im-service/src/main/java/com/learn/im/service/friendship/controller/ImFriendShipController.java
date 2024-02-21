@@ -1,6 +1,7 @@
 package com.learn.im.service.friendship.controller;
 
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.friendship.model.req.*;
 import com.learn.im.service.friendship.service.ImFriendService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,5 +83,10 @@ public class ImFriendShipController {
         return imFriendService.checkBlck(req);
     }
 
+    @RequestMapping("/syncFriendshipList")
+    public ResponseVO syncFriendshipList(@RequestBody @Validated SyncReq req, Integer appId){
+        req.setAppId(appId);
+        return imFriendService.syncFriendshipList(req);
+    }
 
 }

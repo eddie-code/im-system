@@ -3,6 +3,7 @@ package com.learn.im.service.friendship.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.learn.im.codec.pack.friendship.*;
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.config.AppConfig;
@@ -14,6 +15,8 @@ import com.learn.im.common.enums.FriendShipStatusEnum;
 import com.learn.im.common.enums.command.FriendshipEventCommand;
 import com.learn.im.common.exception.ApplicationException;
 import com.learn.im.common.model.RequestBase;
+import com.learn.im.common.model.SyncReq;
+import com.learn.im.common.model.SyncResp;
 import com.learn.im.service.friendship.dao.ImFriendShipEntity;
 import com.learn.im.service.friendship.dao.mapper.ImFriendShipMapper;
 import com.learn.im.service.friendship.model.callback.AddFriendAfterCallbackDto;
@@ -529,6 +532,42 @@ public class ImFriendServiceImpl implements ImFriendService {
         }
 
         return ResponseVO.successResponse(result);
+    }
+
+    @Override
+    public ResponseVO syncFriendshipList(SyncReq req) {
+
+        if (req.getMaxLimit() > 100) {
+            req.setMaxLimit(100);
+        }
+
+        SyncResp<ImFriendShipEntity> resp = new SyncResp<>();
+        //seq > req.getseq limit maxLimit
+        QueryWrapper<ImFriendShipEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("from_id", req.getOperater());
+        queryWrapper.gt("friend_sequence", req.getLastSequence());  // gt = 大于
+        queryWrapper.eq("app_id", req.getAppId());
+        queryWrapper.last(" limit " + req.getMaxLimit());
+        queryWrapper.orderByAsc("friend_sequence"); // 升序
+        List<ImFriendShipEntity> list = imFriendShipMapper.selectList(queryWrapper);
+
+        if (!CollectionUtils.isEmpty(list)) {
+            // 上面已经按升序排序，所以最后一个元素，就是最大的Seq
+            ImFriendShipEntity maxSeqEntity = list.get(list.size() - 1);
+            resp.setDataList(list);
+            // 设置最大seq
+            // SQL: select max(friend_sequence) from im_friendship where app_id = 10000 AND from_id = 'lld';
+            Long friendShipMaxSeq = imFriendShipMapper.getFriendShipMaxSeq(req.getAppId(), req.getOperater());
+            resp.setMaxSequence(friendShipMaxSeq);
+            // 判断 最后一个元素的Seq 是否大于等于 最大Seq
+            boolean b = maxSeqEntity.getFriendSequence() >= friendShipMaxSeq;
+            // 设置是否拉取完毕
+            resp.setCompleted(b);
+            return ResponseVO.successResponse(resp);
+        }
+        // List为空, 直接返回 true
+        resp.setCompleted(true);
+        return ResponseVO.successResponse(resp);
     }
 
 

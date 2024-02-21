@@ -2,6 +2,7 @@ package com.learn.im.service.friendship.service;
 
 import com.learn.im.common.ResponseVO;
 import com.learn.im.common.model.RequestBase;
+import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.friendship.model.req.*;
 
 /**
@@ -101,4 +102,11 @@ public interface ImFriendService {
      */
     public ResponseVO checkBlck(CheckFriendShipReq req);
 
+    /**
+     * 同步好友关系链
+     *
+     * @param req
+     * @return
+     */
+    ResponseVO syncFriendshipList(SyncReq req);
 }
