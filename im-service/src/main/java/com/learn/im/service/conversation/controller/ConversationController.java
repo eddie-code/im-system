@@ -1,5 +1,6 @@
 package com.learn.im.service.conversation.controller;
 
+import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.conversation.model.UpdateConversationReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +35,12 @@ public class ConversationController {
         req.setAppId(appId);
 //        req.setOperater(identifier);
         return conversationService.updateConversation(req);
+    }
+
+    @RequestMapping("/syncConversationList")
+    public ResponseVO syncFriendShipList(@RequestBody @Validated SyncReq req, Integer appId)  {
+        req.setAppId(appId);
+        return conversationService.syncConversationSet(req);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.learn.im.service.group.controller;
 
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.group.model.req.*;
 import com.learn.im.service.group.service.GroupMessageService;
 import com.learn.im.service.group.service.ImGroupService;
@@ -88,6 +89,12 @@ public class ImGroupController {
         req.setAppId(appId);
         req.setOperater(identifier);
         return ResponseVO.successResponse(groupMessageService.send(req));
+    }
+
+    @RequestMapping("/syncJoinedGroup")
+    public ResponseVO syncJoinedGroup(@RequestBody @Validated SyncReq req, Integer appId, String identifier)  {
+        req.setAppId(appId);
+        return groupService.syncJoinedGroupList(req);
     }
 
 

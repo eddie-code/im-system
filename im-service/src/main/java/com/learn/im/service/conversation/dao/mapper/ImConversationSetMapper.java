@@ -17,5 +17,8 @@ public interface ImConversationSetMapper extends BaseMapper<ImConversationSetEnt
             " where conversation_id = #{conversationId} and app_id = #{appId} AND readed_sequence < #{readedSequence}")
     void readMark(ImConversationSetEntity imConversationSetEntity);
 
+    @Select(" select max(sequence) from im_conversation_set where app_id = #{appId} AND from_id = #{userId} ")
+    Long geConversationSetMaxSeq(Integer appId, String userId);
+
 }
 

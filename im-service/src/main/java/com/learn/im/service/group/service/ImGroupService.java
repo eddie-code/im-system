@@ -1,6 +1,7 @@
 package com.learn.im.service.group.service;
 
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.group.dao.ImGroupEntity;
 import com.learn.im.service.group.model.req.*;
 
@@ -35,4 +36,5 @@ public interface ImGroupService {
 
     public ResponseVO muteGroup(MuteGroupReq req);
 
+    ResponseVO syncJoinedGroupList(SyncReq req);
 }
