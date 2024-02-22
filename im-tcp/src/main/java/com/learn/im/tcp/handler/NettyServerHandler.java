@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.learn.im.codec.pack.LoginPack;
 import com.learn.im.codec.pack.message.ChatMessageAck;
+import com.learn.im.codec.pack.user.LoginAckPack;
+import com.learn.im.codec.pack.user.UserStatusChangeNotifyPack;
 import com.learn.im.codec.proto.Message;
 import com.learn.im.codec.proto.MessagePack;
 import com.learn.im.common.ResponseVO;
@@ -13,6 +15,7 @@ import com.learn.im.common.enums.ImConnectStatusEnum;
 import com.learn.im.common.enums.command.GroupEventCommand;
 import com.learn.im.common.enums.command.MessageCommand;
 import com.learn.im.common.enums.command.SystemCommand;
+import com.learn.im.common.enums.command.UserEventCommand;
 import com.learn.im.common.model.UserClientDto;
 import com.learn.im.common.model.UserSession;
 import com.learn.im.common.model.message.CheckSendMessageReq;
@@ -124,6 +127,28 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             dto.setAppId(message.getMessageHeader().getAppId());
             RTopic topic = redissonClient.getTopic(Constants.RedisConstants.UserLoginChannel);
             topic.publish(JSONObject.toJSONString(dto));
+
+            UserStatusChangeNotifyPack userStatusChangeNotifyPack = new UserStatusChangeNotifyPack();
+            userStatusChangeNotifyPack.setAppId(message.getMessageHeader().getAppId());
+            userStatusChangeNotifyPack.setUserId(loginPack.getUserId());
+            userStatusChangeNotifyPack.setStatus(ImConnectStatusEnum.ONLINE_STATUS.getCode()); // 在线
+            // 发送给MQ
+            MqMessageProducer.sendMessage(
+                    userStatusChangeNotifyPack,
+                    message.getMessageHeader(),
+                    UserEventCommand.USER_ONLINE_STATUS_CHANGE.getCommand() // 用户状态修改报文
+            );
+
+            // 补充登录ack给登录方, 你已经登录成功
+            MessagePack<LoginAckPack> loginSuccess = new MessagePack<>();
+            LoginAckPack loginAckPack = new LoginAckPack();
+            loginAckPack.setUserId(loginPack.getUserId());
+            loginSuccess.setCommand(SystemCommand.LOGINACK.getCommand()); // 登录ack 9001
+            loginSuccess.setData(loginAckPack);
+            loginSuccess.setImei(message.getMessageHeader().getImei());
+            loginSuccess.setAppId(message.getMessageHeader().getAppId());
+            // 发送数据
+            channelHandlerContext.channel().writeAndFlush(loginSuccess);
 
         } else if (command == SystemCommand.LOGOUT.getCommand()) { // 用户退出
             // 删除session

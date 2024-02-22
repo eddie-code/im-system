@@ -1,10 +1,14 @@
 package com.learn.im.tcp.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.learn.im.codec.pack.user.UserStatusChangeNotifyPack;
+import com.learn.im.codec.proto.MessageHeader;
 import com.learn.im.common.constant.Constants;
 import com.learn.im.common.enums.ImConnectStatusEnum;
+import com.learn.im.common.enums.command.UserEventCommand;
 import com.learn.im.common.model.UserClientDto;
 import com.learn.im.common.model.UserSession;
+import com.learn.im.tcp.publish.MqMessageProducer;
 import com.learn.im.tcp.redis.RedisManager;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.AttributeKey;
@@ -95,6 +99,22 @@ public class SessionSocketHolder {
         RedissonClient redissonClient = RedisManager.getRedissonClient();
         RMap<Object, Object> map = redissonClient.getMap(appId + Constants.RedisConstants.UserSessionConstants + userId);
         map.remove(clientType + ":" + imei);
+
+        MessageHeader messageHeader = new MessageHeader();
+        messageHeader.setAppId(appId);
+        messageHeader.setImei(imei);
+        messageHeader.setClientType(clientType);
+
+        UserStatusChangeNotifyPack userStatusChangeNotifyPack = new UserStatusChangeNotifyPack();
+        userStatusChangeNotifyPack.setAppId(appId);
+        userStatusChangeNotifyPack.setUserId(userId);
+        userStatusChangeNotifyPack.setStatus(ImConnectStatusEnum.OFFLINE_STATUS.getCode());
+        // 发信息给逻辑层
+        MqMessageProducer.sendMessage(
+                userStatusChangeNotifyPack,
+                messageHeader,
+                UserEventCommand.USER_ONLINE_STATUS_CHANGE.getCommand()
+        );
 
         // 关闭路由
         nioSocketChannel.close();
