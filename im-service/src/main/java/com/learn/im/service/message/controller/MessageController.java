@@ -1,7 +1,9 @@
 package com.learn.im.service.message.controller;
 
 import com.learn.im.common.ResponseVO;
+import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.message.model.req.SendMessageReq;
+import com.learn.im.service.message.service.MessageSyncService;
 import com.learn.im.service.message.service.P2PMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +22,9 @@ public class MessageController {
     @Autowired
     P2PMessageService p2PMessageService;
 
+    @Autowired
+    MessageSyncService messageSyncService;
+
     @RequestMapping("/send")
     public ResponseVO send(@RequestBody @Validated SendMessageReq req, Integer appId) {
         req.setAppId(appId);
@@ -34,6 +39,15 @@ public class MessageController {
         return p2PMessageService.imServerPermissionCheck(
                 req.getFromId(), req.getToId(), req.getAppId()
         );
+    }
+
+    /**
+     * 增量拉取离线消息
+     */
+    @RequestMapping("/syncOfflineMessage")
+    public ResponseVO syncOfflineMessage(@RequestBody @Validated SyncReq req, Integer appId)  {
+        req.setAppId(appId);
+        return messageSyncService.syncOfflineMessage(req);
     }
 
 }

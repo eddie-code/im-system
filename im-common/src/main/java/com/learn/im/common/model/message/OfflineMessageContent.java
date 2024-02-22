@@ -4,7 +4,7 @@ import lombok.Data;
 
 /**
  * @author lee
- * @description
+ * @description 离线消息
  */
 @Data
 public class OfflineMessageContent {
