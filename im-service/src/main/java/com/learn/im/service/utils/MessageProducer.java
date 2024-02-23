@@ -109,7 +109,7 @@ public class MessageProducer {
     }
 
     /**
-     * 发送给除了某一端的其他端
+     * 发送给除客户端之外的用户
      */
     public void sendToUserExceptClient(String toId, Command command, Object data, ClientInfo clientInfo) {
         List<UserSession> userSession = userSessionUtils.getUserSession(clientInfo.getAppId(), toId);

@@ -14,7 +14,9 @@ public class UserStatusChangeNotifyContent extends ClientInfo {
 
     private String userId;
 
-    //服务端状态 1上线 2离线
+    /**
+     * 服务端状态 1上线 2离线
+     */
     private Integer status;
 
 

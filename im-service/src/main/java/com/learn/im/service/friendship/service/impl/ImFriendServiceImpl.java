@@ -269,6 +269,7 @@ public class ImFriendServiceImpl implements ImFriendService {
             BeanUtils.copyProperties(dto, fromItem);
             fromItem.setStatus(FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
             fromItem.setCreateTime(System.currentTimeMillis());
+            fromItem.setBlack(FriendShipStatusEnum.BLACK_STATUS_NORMAL.getCode());
             int insert = imFriendShipMapper.insert(fromItem);
             if (insert != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
@@ -319,7 +320,7 @@ public class ImFriendServiceImpl implements ImFriendService {
                 toItem.setFriendSequence(seq);
                 toItem.setStatus(FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
                 toItem.setCreateTime(System.currentTimeMillis());
-//                toItem.setBlack(FriendShipStatusEnum.BLACK_STATUS_NORMAL.getCode());
+                toItem.setBlack(FriendShipStatusEnum.BLACK_STATUS_NORMAL.getCode());
                 int insert = imFriendShipMapper.insert(toItem);
                 writeUserSeq.writeUserSeq(appId, dto.getToId(), Constants.SeqConstants.Friendship, seq);
             } else {
@@ -733,6 +734,11 @@ public class ImFriendServiceImpl implements ImFriendService {
         }
 
         return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public List<String> getAllFriendId(String userId, Integer appId) {
+        return imFriendShipMapper.getAllFriendId(userId,appId);
     }
 
 }

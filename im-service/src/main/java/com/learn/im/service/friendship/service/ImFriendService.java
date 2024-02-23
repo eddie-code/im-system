@@ -5,6 +5,8 @@ import com.learn.im.common.model.RequestBase;
 import com.learn.im.common.model.SyncReq;
 import com.learn.im.service.friendship.model.req.*;
 
+import java.util.List;
+
 /**
  * @description:
  * @author: lee
@@ -109,4 +111,6 @@ public interface ImFriendService {
      * @return
      */
     ResponseVO syncFriendshipList(SyncReq req);
+
+    List<String> getAllFriendId(String userId, Integer appId);
 }
