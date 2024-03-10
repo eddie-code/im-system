@@ -1,6 +1,7 @@
 package com.learn.im.service.user.service;
 
 import com.learn.im.service.user.model.UserStatusChangeNotifyContent;
+import com.learn.im.service.user.model.req.SubscribeUserOnlineStatusReq;
 
 /**
  * @author lee
@@ -13,4 +14,5 @@ public interface ImUserStatusService {
      */
     public void processUserOnlineStatusNotify(UserStatusChangeNotifyContent content);
 
+    void subscribeUserOnlineStatus(SubscribeUserOnlineStatusReq req);
 }

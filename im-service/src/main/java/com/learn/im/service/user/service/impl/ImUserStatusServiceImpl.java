@@ -7,6 +7,7 @@ import com.learn.im.common.model.ClientInfo;
 import com.learn.im.common.model.UserSession;
 import com.learn.im.service.friendship.service.ImFriendService;
 import com.learn.im.service.user.model.UserStatusChangeNotifyContent;
+import com.learn.im.service.user.model.req.SubscribeUserOnlineStatusReq;
 import com.learn.im.service.user.service.ImUserStatusService;
 import com.learn.im.service.utils.MessageProducer;
 import com.learn.im.service.utils.UserSessionUtils;
@@ -61,6 +62,25 @@ public class ImUserStatusServiceImpl implements ImUserStatusService {
         );
     }
 
+    /**
+     * 登录人订阅谁， 就推送给谁
+     *
+     * @param req
+     */
+    @Override
+    public void subscribeUserOnlineStatus(SubscribeUserOnlineStatusReq req) {
+        Long subExpireTime = 0L;
+        if (req != null && req.getSubTime() > 0) {
+            subExpireTime = System.currentTimeMillis() + req.getSubTime();
+        }
+
+        for (String beSubUserId : req.getSubUserId()) {
+            String userKey = req.getAppId() + ":" + Constants.RedisConstants.subscribe + ":" + beSubUserId;
+            // 键： Operater 就是 lld...    值： 过期时间
+            stringRedisTemplate.opsForHash().put(userKey, req.getOperater(), subExpireTime.toString());
+        }
+    }
+
     private void syncSender(Object pack, String userId, ClientInfo clientInfo) {
         messageProducer.sendToUserExceptClient(
                 userId,
@@ -83,22 +103,22 @@ public class ImUserStatusServiceImpl implements ImUserStatusService {
         }
 
         // TODO 发送给临时订阅的人
-//        String userKey = appId + ":" + Constants.RedisConstants.subscribe + userId;
-//        Set<Object> keys = stringRedisTemplate.opsForHash().keys(userKey);
-//        for (Object key : keys) {
-//            String filed = (String) key;
-//            Long expire = Long.valueOf((String) stringRedisTemplate.opsForHash().get(userKey, filed));
-//            if (expire > 0 && expire > System.currentTimeMillis()) {
-//                messageProducer.sendToUser(
-//                        filed,
-//                        UserEventCommand.USER_ONLINE_STATUS_CHANGE_NOTIFY,
-//                        pack,
-//                        appId
-//                );
-//            } else {
-//                stringRedisTemplate.opsForHash().delete(userKey, filed);
-//            }
-//        }
+        String userKey = appId + ":" + Constants.RedisConstants.subscribe  + ":" + userId;
+        Set<Object> keys = stringRedisTemplate.opsForHash().keys(userKey);
+        for (Object key : keys) {
+            String filed = (String) key;
+            Long expire = Long.valueOf((String) stringRedisTemplate.opsForHash().get(userKey, filed));
+            if (expire > 0 && expire > System.currentTimeMillis()) {
+                messageProducer.sendToUser(
+                        filed,
+                        UserEventCommand.USER_ONLINE_STATUS_CHANGE_NOTIFY,
+                        pack,
+                        appId
+                );
+            } else {
+                stringRedisTemplate.opsForHash().delete(userKey, filed);
+            }
+        }
     }
 
 }
